@@ -45,3 +45,13 @@
 | 托盘常驻 + main/prompt 双窗口 | [ADR-0003](docs/adr/0003-dual-window-and-tray.md) |
 | 每日单次触发、不补发、仅工作日、snooze、已答不重弹 | [ADR-0004](docs/adr/0004-daily-schedule-semantics.md) |
 | 全量 Markdown/CSV 导出、autostart 持久化 | [ADR-0005](docs/adr/0005-export-and-autostart.md) |
+
+## 增量变更 spec 索引
+
+每个 phase 一份行为需求 + ticket 记录，实现后更新状态，作为增量变更的追溯链。
+
+| Phase | 状态 | 出处 |
+|---|---|---|
+| Phase 1 — Rust 后端骨架 | 已完成 | [docs/specs/phase-1.md](docs/specs/phase-1.md) |
+| Phase 2 — 前端三视图 | 已完成 | [docs/specs/phase-2.md](docs/specs/phase-2.md) |
+| Phase 3 — 端到端集成 | 进行中（T-1 完成，T-2 待真机验证） | [docs/specs/phase-3.md](docs/specs/phase-3.md) |
