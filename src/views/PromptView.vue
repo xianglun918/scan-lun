@@ -6,6 +6,7 @@ import {
   saveRecord,
   snoozeReminder,
   today,
+  todayStatus,
   type Settings,
 } from "../services/api";
 
@@ -15,12 +16,15 @@ const settings = ref<Settings | null>(null);
 const answers = ref<string[]>(["", "", ""]);
 const saving = ref(false);
 const error = ref("");
+const answered = ref(false);
 
 const win = getCurrentWindow();
 
 onMounted(async () => {
-  settings.value = await getSettings();
-  answers.value = settings.value.template.map(() => "");
+  const [s, done] = await Promise.all([getSettings(), todayStatus()]);
+  settings.value = s;
+  answered.value = done;
+  answers.value = s.template.map(() => "");
 });
 
 async function save() {
@@ -47,6 +51,10 @@ async function snooze() {
 async function skip() {
   await win.close();
 }
+
+function closeWin() {
+  void win.close();
+}
 </script>
 
 <template>
@@ -54,7 +62,12 @@ async function skip() {
     <h1>每日三省</h1>
     <p class="date">{{ today() }}</p>
 
-    <form v-if="settings" @submit.prevent="save">
+    <div v-if="answered" class="done">
+      <p>今日已完成三省，无需重复填写。</p>
+      <button class="primary" @click="closeWin">关闭</button>
+    </div>
+
+    <form v-else-if="settings" @submit.prevent="save">
       <div v-for="(q, i) in settings.template" :key="i" class="field">
         <label :for="`q${i}`">{{ i + 1 }}. {{ q }}</label>
         <textarea
@@ -127,6 +140,16 @@ textarea:focus {
   color: #d43;
   font-size: 13px;
   margin: 8px 0;
+}
+
+.done {
+  padding: 40px 0;
+  text-align: center;
+  color: #555;
+}
+
+.done p {
+  margin: 0 0 16px;
 }
 
 .actions {
