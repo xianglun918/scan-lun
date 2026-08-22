@@ -1,6 +1,9 @@
 # OMC runtime state
 .omc/
 
+# Playwright CLI artifacts
+.playwright-cli/
+
 # Logs
 logs
 *.log

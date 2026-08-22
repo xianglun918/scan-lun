@@ -53,6 +53,14 @@ pub fn request_reload(tx: &mpsc::Sender<SchedulerMsg>) {
     let _ = tx.try_send(SchedulerMsg::Reload);
 }
 
+/// Fires the remind event again after `mins` minutes (used by snooze).
+pub fn schedule_snooze(app: AppHandle, mins: u64) {
+    tauri::async_runtime::spawn(async move {
+        sleep(Duration::from_secs(mins * 60)).await;
+        let _ = app.emit(REMIND_EVENT, ());
+    });
+}
+
 fn should_remind(app: &AppHandle) -> bool {
     let state = app.state::<db::Db>();
     let conn = state.0.lock().expect("db lock poisoned");

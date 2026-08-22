@@ -65,6 +65,7 @@ pub fn run() {
             commands::export_data,
             commands::clear_data,
             commands::today_status,
+            commands::snooze_reminder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

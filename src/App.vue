@@ -1,18 +1,66 @@
 <script setup lang="ts">
-// scan-lun main window. Views will be wired in Phase 2.
+import { computed, ref } from "vue";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import PromptView from "./views/PromptView.vue";
+import HistoryView from "./views/HistoryView.vue";
+import SettingsView from "./views/SettingsView.vue";
+
+const win = getCurrentWindowSafe();
+const isPrompt = win?.label === "prompt";
+
+// Tauri 运行时不可用时（纯浏览器调试/预览）降级为主窗口视图。
+function getCurrentWindowSafe() {
+  try {
+    return getCurrentWindow();
+  } catch {
+    return null;
+  }
+}
+
+const route = ref(readRoute());
+window.addEventListener("hashchange", () => (route.value = readRoute()));
+
+function readRoute(): "history" | "settings" {
+  const h = window.location.hash;
+  return h.includes("settings") ? "settings" : "history";
+}
+
+function navigate(r: "history" | "settings") {
+  window.location.hash = r;
+  route.value = r;
+}
+
+const isHistory = computed(() => route.value === "history");
 </script>
 
 <template>
-  <main class="container">
-    <h1>scan-lun</h1>
-    <p>极简每日自省工具 — 脚手架占位页</p>
-  </main>
+  <PromptView v-if="isPrompt" />
+
+  <div v-else class="app">
+    <nav class="tabs">
+      <button
+        :class="{ active: isHistory }"
+        @click="navigate('history')"
+      >
+        历史
+      </button>
+      <button
+        :class="{ active: !isHistory }"
+        @click="navigate('settings')"
+      >
+        设置
+      </button>
+    </nav>
+    <HistoryView v-if="isHistory" />
+    <SettingsView v-else />
+  </div>
 </template>
 
 <style>
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
+  font-family: Inter, Avenir, Helvetica, Arial, "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+  font-size: 15px;
   line-height: 24px;
   font-weight: 400;
   color: #0f0f0f;
@@ -22,19 +70,52 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.container {
-  margin: 0;
-  padding-top: 20vh;
+* {
+  box-sizing: border-box;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.tabs {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
+  gap: 4px;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tabs button {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  color: #666;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs button.active {
+  color: #0f0f0f;
+  font-weight: 500;
+  border-bottom-color: #396cd8;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
     background-color: #2f2f2f;
+  }
+  .tabs {
+    border-bottom-color: #444;
+  }
+  .tabs button {
+    color: #aaa;
+  }
+  .tabs button.active {
+    color: #f6f6f6;
   }
 }
 </style>

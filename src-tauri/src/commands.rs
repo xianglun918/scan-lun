@@ -78,3 +78,11 @@ pub fn today_status(state: State<Db>) -> Result<bool, String> {
     let conn = state.0.lock().expect("db lock poisoned");
     db::today_answered(&conn).map_err(|e| e.to_string())
 }
+
+/// Re-arms the prompt window after a snooze. The window itself closes; after
+/// `mins` the backend emits the remind event again.
+#[tauri::command]
+pub fn snooze_reminder(app: AppHandle, mins: u64) -> Result<(), String> {
+    scheduler::schedule_snooze(app, mins);
+    Ok(())
+}
