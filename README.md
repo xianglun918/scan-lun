@@ -15,6 +15,8 @@
 - 本地 SQLite 明文存储，数据完全留在本机
 - 历史回看（按日期展开），全量 Markdown / CSV 导出
 
+完整功能使用路径见 [story-line.md](./story-line.md)。
+
 ## Screenshots
 
 <!-- TODO: 补充弹窗、历史、设置三张截图 -->
