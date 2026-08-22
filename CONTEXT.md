@@ -55,3 +55,4 @@
 | Phase 1 — Rust 后端骨架 | 已完成 | [docs/specs/phase-1.md](docs/specs/phase-1.md) |
 | Phase 2 — 前端三视图 | 已完成 | [docs/specs/phase-2.md](docs/specs/phase-2.md) |
 | Phase 3 — 端到端集成 | 进行中（T-1 完成，T-2 待真机验证） | [docs/specs/phase-3.md](docs/specs/phase-3.md) |
+| Phase 4 — 开源配套与打包 | 进行中（T1-T4 已交付，待本地 build 验证） | [docs/specs/phase-4.md](docs/specs/phase-4.md) |
