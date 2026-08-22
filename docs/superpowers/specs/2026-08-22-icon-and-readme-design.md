@@ -1,7 +1,9 @@
 # scan-lun Icon & README Redesign
 
 Date: 2026-08-22
+Updated: 2026-08-22
 Approach: A. Balanced redesign (recommended)
+Status: implemented
 
 ## Goal
 
@@ -112,3 +114,33 @@ Replace the current `README.md` with a user-facing usage guide. Move developer-c
 - `README.md` is bilingual and user-guide focused
 - `docs/development.md` contains the moved dev/build content
 - `pnpm tauri dev` still works (icon paths unchanged)
+
+---
+
+## Implementation
+
+Branch: `feat/icon-and-readme`
+
+Commits:
+1. `f20bf8b` — `assets: add source SVG for notebook icon`
+2. `c4ba7cb` — `assets: regenerate icon set from notebook SVG`
+3. `cba9600` — `docs: move developer setup and build instructions to docs/development.md`
+4. `3b65da9` — `docs: rewrite README as bilingual user guide`
+
+### What changed
+
+- `docs/assets/icon.svg` created as the source-of-truth icon.
+- `src-tauri/icons/` regenerated with the notebook design (50 files, including desktop, Windows tile, iOS, and Android icons).
+- `docs/development.md` created with Tech Stack, Requirements, Development, Build, and Project Structure content moved from the old README.
+- `README.md` rewritten as a Chinese-first bilingual user guide with eight sections.
+
+### Verification
+
+- All icon paths in `src-tauri/tauri.conf.json` resolve to existing files.
+- `pnpm install --frozen-lockfile` succeeded.
+- `cargo check` in `src-tauri` succeeded.
+- `pnpm build` (frontend Vue/Vite build) succeeded.
+
+### Deviation from spec
+
+None. The icon concept evolved from "mirror/reflection" to "spiral-bound notebook with three lines" during design review, which was approved by the user and is reflected in the Concept section above.
