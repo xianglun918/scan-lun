@@ -63,7 +63,7 @@
 - **Markdown / CSV 导出**：在历史页一键导出全量数据。
 - **仅工作日提醒 + 开机自启**：两个开关都在设置页。
 
-完整功能使用路径见 [story-line.md](./story-line.md)。
+完整功能使用路径见 [docs/story-line.md](./docs/story-line.md)。
 
 ## 设置与隐私
 

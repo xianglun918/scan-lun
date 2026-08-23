@@ -1,7 +1,7 @@
 # Phase 4 — 开源配套与打包（增量 spec）
 
 > SDD 前向基线：本文件定义 Phase 4 的行为需求与 ticket 拆分，实现后按此验收。
-> 追认基线见 [CONTEXT.md](../../CONTEXT.md)；前置各 phase 见 [phase-1](phase-1.md) / [phase-2](phase-2.md) / [phase-3](phase-3.md)。
+> 追认基线见 [CONTEXT.md](../CONTEXT.md)；前置各 phase 见 [phase-1](phase-1.md) / [phase-2](phase-2.md) / [phase-3](phase-3.md)。
 
 ## 行为需求
 

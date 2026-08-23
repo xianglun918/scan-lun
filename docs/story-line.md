@@ -1,7 +1,7 @@
 # scan-lun 功能使用路径（Story Line）
 
 > 按用户旅程介绍当前每个功能的使用路径：**怎么触发 → 界面做什么 → 结果去哪**。
-> 领域术语定义见 [CONTEXT.md](./CONTEXT.md)，各功能需求/票见 [docs/specs/](./docs/specs/)。
+> 领域术语定义见 [CONTEXT.md](./CONTEXT.md)，各功能需求/票见 [specs/](./specs/)。
 
 ## 1. 第一次使用
 

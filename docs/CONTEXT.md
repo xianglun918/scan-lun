@@ -40,11 +40,11 @@
 
 | 决策 | 出处 |
 |---|---|
-| Tauri 2 + Rust + Vue 3 + TypeScript + Vite | [ADR-0001](docs/adr/0001-stack-tauri2-vue3-ts.md) |
-| 本地 SQLite 明文存储，records + settings 表 | [ADR-0002](docs/adr/0002-sqlite-local-storage.md) |
-| 托盘常驻 + main/prompt 双窗口 | [ADR-0003](docs/adr/0003-dual-window-and-tray.md) |
-| 每日单次触发、不补发、仅工作日、snooze、已答不重弹 | [ADR-0004](docs/adr/0004-daily-schedule-semantics.md) |
-| 全量 Markdown/CSV 导出、autostart 持久化 | [ADR-0005](docs/adr/0005-export-and-autostart.md) |
+| Tauri 2 + Rust + Vue 3 + TypeScript + Vite | [ADR-0001](adr/0001-stack-tauri2-vue3-ts.md) |
+| 本地 SQLite 明文存储，records + settings 表 | [ADR-0002](adr/0002-sqlite-local-storage.md) |
+| 托盘常驻 + main/prompt 双窗口 | [ADR-0003](adr/0003-dual-window-and-tray.md) |
+| 每日单次触发、不补发、仅工作日、snooze、已答不重弹 | [ADR-0004](adr/0004-daily-schedule-semantics.md) |
+| 全量 Markdown/CSV 导出、autostart 持久化 | [ADR-0005](adr/0005-export-and-autostart.md) |
 
 ## 增量变更 spec 索引
 
@@ -52,7 +52,7 @@
 
 | Phase | 状态 | 出处 |
 |---|---|---|
-| Phase 1 — Rust 后端骨架 | 已完成 | [docs/specs/phase-1.md](docs/specs/phase-1.md) |
-| Phase 2 — 前端三视图 | 已完成 | [docs/specs/phase-2.md](docs/specs/phase-2.md) |
-| Phase 3 — 端到端集成 | 进行中（T-1 完成，T-2 待真机验证） | [docs/specs/phase-3.md](docs/specs/phase-3.md) |
-| Phase 4 — 开源配套与打包 | 已完成 | [docs/specs/phase-4.md](docs/specs/phase-4.md) |
+| Phase 1 — Rust 后端骨架 | 已完成 | [specs/phase-1.md](specs/phase-1.md) |
+| Phase 2 — 前端三视图 | 已完成 | [specs/phase-2.md](specs/phase-2.md) |
+| Phase 3 — 端到端集成 | 进行中（T-1 完成，T-2 待真机验证） | [specs/phase-3.md](specs/phase-3.md) |
+| Phase 4 — 开源配套与打包 | 已完成 | [specs/phase-4.md](specs/phase-4.md) |

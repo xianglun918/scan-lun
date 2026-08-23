@@ -1,7 +1,7 @@
 # Phase 3 — 端到端集成（增量 spec）
 
 > SDD 前向基线：本文件定义 Phase 3 的行为需求与 ticket 拆分，实现后按此验收。
-> 追认基线见 [CONTEXT.md](../../CONTEXT.md) 与 [ADR-0003/0004](../../docs/adr/)。
+> 追认基线见 [CONTEXT.md](../CONTEXT.md) 与 [ADR-0003/0004](../adr/)。
 
 ## 行为需求
 

@@ -1,7 +1,7 @@
 # Phase 2 — 前端三视图（as-built 追认 spec）
 
 > 已实施完成（commit `4fde0f1`），本文件是事后按交付行为追认的 ticket 记录，
-> 作为 SDD 增量变更的基线之一。追认基线另见 [CONTEXT.md](../../CONTEXT.md) 与 [ADR-0001~0005](../../docs/adr/)。
+> 作为 SDD 增量变更的基线之一。追认基线另见 [CONTEXT.md](../CONTEXT.md) 与 [ADR-0001~0005](../adr/)。
 
 ## 行为需求
 

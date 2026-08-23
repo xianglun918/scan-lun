@@ -63,7 +63,7 @@ Reviewing and exporting live in the main window (click the tray icon or use the 
 - **Markdown / CSV export**: one click in History exports everything.
 - **Workday-only reminders + launch at login**: both toggles live in Settings.
 
-For a full walkthrough of every feature path, see [story-line.md](./story-line.md).
+For a full walkthrough of every feature path, see [docs/story-line.md](./docs/story-line.md).
 
 ## Settings & Privacy
 
