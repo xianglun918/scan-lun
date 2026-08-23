@@ -1,3 +1,4 @@
+use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager};
@@ -5,13 +6,17 @@ use tauri::{AppHandle, Manager};
 pub const MAIN_LABEL: &str = "main";
 pub const PROMPT_LABEL: &str = "prompt";
 
+const TRAY_ICON: &[u8] = include_bytes!("../icons/tray-icon.png");
+
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "打开 scan-lun", true, None::<&str>)?;
     let fill = MenuItem::with_id(app, "fill", "立即填写", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &fill, &quit])?;
 
-    TrayIconBuilder::with_id("main-tray")
+    let tray_icon = Image::from_bytes(TRAY_ICON)?;
+    let builder = TrayIconBuilder::with_id("main-tray")
+        .icon(tray_icon)
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -29,8 +34,12 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
             {
                 show_main(&tray.app_handle());
             }
-        })
-        .build(app)?;
+        });
+
+    #[cfg(target_os = "macos")]
+    let builder = builder.icon_as_template(true);
+
+    builder.build(app)?;
 
     Ok(())
 }
