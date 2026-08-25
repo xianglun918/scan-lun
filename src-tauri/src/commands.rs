@@ -86,3 +86,18 @@ pub fn snooze_reminder(app: AppHandle, mins: u64) -> Result<(), String> {
     scheduler::schedule_snooze(app, mins);
     Ok(())
 }
+
+#[tauri::command]
+pub async fn check_update(app: AppHandle) -> Result<crate::updater::UpdateInfo, String> {
+    crate::updater::check(&app).await
+}
+
+#[tauri::command]
+pub async fn install_update(app: AppHandle) -> Result<(), String> {
+    crate::updater::download_and_install(&app).await
+}
+
+#[tauri::command]
+pub fn restart_app(app: AppHandle) -> Result<(), String> {
+    app.restart();
+}
