@@ -31,9 +31,54 @@ impl UpdateInfo {
     }
 }
 
-pub fn check(_app: &AppHandle) -> Result<UpdateInfo, String> {
-    // 占位：Task 3 替换
-    Err("not yet implemented".into())
+/// Public entry. Wraps the result in Tauri event emission.
+pub fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
+    let current = app.package_info().version.to_string();
+    let updater = match app.updater() {
+        Ok(u) => u,
+        Err(e) => {
+            return Err(format!("updater init failed: {e}"));
+        }
+    };
+    check_with(&updater, &current, app)
+}
+
+/// Pure function over the updater. Testable without a full Tauri app.
+pub(crate) fn check_with(
+    updater: &tauri_plugin_updater::Updater,
+    current_version: &str,
+    app: &AppHandle,
+) -> Result<UpdateInfo, String> {
+    // `Updater::check` is async (plugin API); block_on is safe here because
+    // `check` is a sync entry point (never called from within the async runtime).
+    match tauri::async_runtime::block_on(updater.check()) {
+        Ok(Some(update)) => {
+            let info = UpdateInfo {
+                available: true,
+                current_version: current_version.to_string(),
+                latest_version: Some(update.version.clone()),
+                notes: update.body.clone(),
+            };
+            let _ = tauri::Emitter::emit(app, UPDATE_AVAILABLE_EVENT, &info);
+            Ok(info)
+        }
+        Ok(None) => {
+            let info = UpdateInfo::up_to_date(current_version.to_string());
+            Ok(info)
+        }
+        Err(e) => {
+            let msg = e.to_string();
+            let _ = tauri::Emitter::emit(
+                app,
+                UPDATE_ERROR_EVENT,
+                serde_json::json!({
+                    "kind": "check_failed",
+                    "message": msg,
+                }),
+            );
+            Err(msg)
+        }
+    }
 }
 
 pub fn download_and_install(_app: &AppHandle) -> Result<(), String> {
@@ -48,6 +93,10 @@ pub fn start_background_loop(_app: AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // 注：check_with 接受 &Update 参数，但 tauri_plugin_updater::Update
+    // 没有公开构造器；只能通过 app.updater() 拿。错误路径测试在 Task 5
+    // 端到端覆盖（mock HTTP server）。本 task 不加单元测试。
 
     #[test]
     fn update_info_serializes_to_camel_case() {
