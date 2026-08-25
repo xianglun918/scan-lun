@@ -340,23 +340,24 @@ git commit -m "feat(updater): add UpdateInfo struct + serialization tests"
 
 ---
 
-### Task 3: 后端 `updater.rs` — 实现 `check()`
+### Task 3: 后端 `updater.rs` — 实现 `check()`（async）
 
 **Files:**
-- Modify: `src-tauri/src/updater.rs`（替换 `check` 函数体）
-- Modify: `src-tauri/src/updater.rs`（加一个 `check_from_updater` 内部函数 + 测试）
+- Modify: `src-tauri/src/updater.rs`（替换 `check` 函数体为 async fn）
 
 **Interfaces:**
-- Consumes: `&AppHandle`, 内部用 `app.updater()` 拿 updater，调 `updater.check()`
+- Consumes: `&AppHandle`, 内部用 `app.updater()` 拿 updater，await `updater.check()`
 - Produces: `Result<UpdateInfo, String>`；emit `update-available` / `update-error` 事件
 
-- [ ] **Step 1: 写 `check` 内部函数（依赖注入风格，方便测试）**
+> **重要修正**：`tauri-plugin-updater` v2 的 `Updater::check()` 是 `async fn`，所以 `check` 和 `check_with` 都必须 `async`。`block_on` 会和 Task 5 的 async runtime spawn 冲突（panic），所以必须从源头改 async。
+
+- [ ] **Step 1: 替换 `check` 为 async**
 
 把整个 `updater.rs` 的 `check` 函数替换为：
 
 ```rust
-/// Public entry. Wraps the result in Tauri event emission.
-pub fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
+/// Public entry. Async because `Updater::check()` is async in tauri-plugin-updater 2.x.
+pub async fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
     let current = app.package_info().version.to_string();
     let updater = match app.updater() {
         Ok(u) => u,
@@ -364,16 +365,17 @@ pub fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
             return Err(format!("updater init failed: {e}"));
         }
     };
-    check_with(&updater, &current, app)
+    check_with(&updater, &current, app).await
 }
 
-/// Pure function over the updater. Testable without a full Tauri app.
-pub(crate) fn check_with(
-    updater: &tauri_plugin_updater::Update,
+/// Async testable helper. Takes the resolved `Updater` (the client returned by
+/// `app.updater()`, NOT the `Update` metadata struct).
+pub(crate) async fn check_with(
+    updater: &tauri_plugin_updater::Updater,
     current_version: &str,
     app: &AppHandle,
 ) -> Result<UpdateInfo, String> {
-    match updater.check() {
+    match updater.check().await {
         Ok(Some(update)) => {
             let info = UpdateInfo {
                 available: true,
@@ -384,10 +386,7 @@ pub(crate) fn check_with(
             let _ = tauri::Emitter::emit(app, UPDATE_AVAILABLE_EVENT, &info);
             Ok(info)
         }
-        Ok(None) => {
-            let info = UpdateInfo::up_to_date(current_version.to_string());
-            Ok(info)
-        }
+        Ok(None) => Ok(UpdateInfo::up_to_date(current_version.to_string())),
         Err(e) => {
             let msg = e.to_string();
             let _ = tauri::Emitter::emit(
@@ -404,19 +403,16 @@ pub(crate) fn check_with(
 }
 ```
 
-- [ ] **Step 2: 加一个新测试 — `check_with` 错误路径**
-
-在 `mod tests` 块内加：
+- [ ] **Step 2: 在 `mod tests` 块加注释说明错误路径测试 defer**
 
 ```rust
-    // 注：check_with 接受 &Update 参数，但 tauri_plugin_updater::Update
-    // 没有公开构造器；只能通过 app.updater() 拿。错误路径测试在 Task 5
-    // 端到端覆盖（mock HTTP server）。本 task 不加单元测试。
+    // 错误路径测试 defer：tauri_plugin_updater::Updater 没有公开构造器，
+    // 错误路径只能通过真实 AppHandle 或 mock HTTP server 测试，超出 MVP 单元测试范围。
 ```
 
-> **注**：`tauri_plugin_updater::Update` 没有公开构造器，`check_with` 函数的纯函数形式不能在单元测试里直接构造。错误路径的端到端测试需要 mock HTTP server，超出 MVP 范围。**不**为这条路径加单元测试；端到端测由手工测覆盖（见 Task 11）。
+> 不要为这条路径加单元测试；端到端测由手工测覆盖（见 Task 13）。
 
-- [ ] **Step 3: 验证 `check_with` 编译通过**
+- [ ] **Step 3: 验证编译**
 
 ```bash
 cd D:\Workspace\scan-lun
@@ -425,21 +421,21 @@ cargo check --manifest-path src-tauri/Cargo.toml --message-format=short
 
 Expected: 无 error
 
-- [ ] **Step 4: 跑测试（应仍 3 passed）**
+- [ ] **Step 4: 跑测试（应仍 13 passed）**
 
 ```bash
 cd D:\Workspace\scan-lun
-cargo test --manifest-path src-tauri/Cargo.toml --lib updater
+cargo test --manifest-path src-tauri/Cargo.toml --lib
 ```
 
-Expected: `3 passed; 0 failed`（struct 序列化测试）
+Expected: `13 passed; 0 failed`
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd D:\Workspace\scan-lun
 git add src-tauri/src/updater.rs
-git commit -m "feat(updater): implement check() with event emission"
+git commit -m "feat(updater): implement async check() with event emission"
 ```
 
 ---
@@ -539,12 +535,12 @@ git commit -m "feat(updater): implement download_and_install() with event emissi
 
 ```rust
 #[tauri::command]
-pub fn check_update(app: AppHandle) -> Result<crate::updater::UpdateInfo, String> {
-    crate::updater::check(&app)
+pub async fn check_update(app: AppHandle) -> Result<crate::updater::UpdateInfo, String> {
+    crate::updater::check(&app).await
 }
 
 #[tauri::command]
-pub fn install_update(app: AppHandle) -> Result<(), String> {
+pub async fn install_update(app: AppHandle) -> Result<(), String> {
     crate::updater::download_and_install(&app)
 }
 
@@ -554,7 +550,11 @@ pub fn restart_app(app: AppHandle) -> Result<(), String> {
 }
 ```
 
-> **注**：`app.restart()` 是 Tauri 2 内置 API（无需额外 crate）。
+> **重要修正**：
+> - `check_update` / `install_update` 都是 `async fn` —— 因为 `updater::check` 是 async（Task 3 修正）
+> - `install_update` 内部 `download_and_install` 也要变成 async（Task 4 也要相应改）
+> - `restart_app` 保持 sync（`app.restart()` 是 sync API）
+> - `app.restart()` 是 Tauri 2 内置 API（无需额外 crate）
 
 - [ ] **Step 2: 改 `src-tauri/src/lib.rs` 的 `invoke_handler!` 宏**
 
@@ -629,18 +629,20 @@ git commit -m "feat(updater): expose check_update / install_update / restart_app
 pub fn start_background_loop(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         // 第一次立即检查
-        if let Err(e) = check(&app) {
+        if let Err(e) = check(&app).await {
             eprintln!("updater: initial check failed: {e}");
         }
         loop {
             tokio::time::sleep(std::time::Duration::from_secs(24 * 60 * 60)).await;
-            if let Err(e) = check(&app) {
+            if let Err(e) = check(&app).await {
                 eprintln!("updater: periodic check failed: {e}");
             }
         }
     });
 }
 ```
+
+> **重要**：`check` 是 async（Task 3 修正），所以**两处**调用都加 `.await`（不是 plan 原文的同步写法）。
 
 - [ ] **Step 2: 改 `src-tauri/src/lib.rs` 在 `setup` 钩子里启动 loop**
 
