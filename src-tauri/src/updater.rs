@@ -79,9 +79,64 @@ pub(crate) async fn check_with(
     }
 }
 
-pub fn download_and_install(_app: &AppHandle) -> Result<(), String> {
-    // 占位：Task 4 替换
-    Err("not yet implemented".into())
+/// Download (if a new release exists) and install side-by-side.
+/// On success, emits `update-downloaded` and the caller should restart
+/// via `app.restart()` or ask the user to.
+///
+/// # Tauri 2 API note
+/// `Update::download_and_install` is async and requires two callbacks:
+/// - `on_chunk(bytes_downloaded, content_length)` fires per download chunk
+/// - `on_download_finish` fires after download (before signature verify)
+/// We pass no-op closures — the frontend gets progress via `update-downloaded`
+/// event fired below. Future enhancement: forward on_chunk bytes to a
+/// `download-progress` event for a real progress bar.
+pub async fn download_and_install(app: &AppHandle) -> Result<(), String> {
+    let current = app.package_info().version.to_string();
+    let updater = app.updater().map_err(|e| format!("updater init failed: {e}"))?;
+    let update = match updater.check().await {
+        Ok(Some(u)) => u,
+        Ok(None) => return Err("no update available".into()),
+        Err(e) => {
+            let msg = e.to_string();
+            let _ = tauri::Emitter::emit(
+                app,
+                UPDATE_ERROR_EVENT,
+                serde_json::json!({
+                    "kind": "check_failed",
+                    "message": msg,
+                }),
+            );
+            return Err(msg);
+        }
+    };
+
+    if let Err(e) = update
+        .download_and_install(
+            |_chunk, _total| { /* progress callback: empty for MVP */ },
+            || { /* on_download_finish: empty for MVP */ },
+        )
+        .await
+    {
+        let msg = e.to_string();
+        let _ = tauri::Emitter::emit(
+            app,
+            UPDATE_ERROR_EVENT,
+            serde_json::json!({
+                "kind": "install_failed",
+                "message": msg,
+            }),
+        );
+        return Err(msg);
+    }
+
+    let info = UpdateInfo {
+        available: true,
+        current_version: current,
+        latest_version: Some(update.version),
+        notes: update.body,
+    };
+    let _ = tauri::Emitter::emit(app, UPDATE_DOWNLOADED_EVENT, &info);
+    Ok(())
 }
 
 pub fn start_background_loop(_app: AppHandle) {
