@@ -31,6 +31,8 @@ pub fn run() {
 
             tray::build(&handle)?;
 
+            updater::start_background_loop(handle.clone());
+
             // Apply the persisted autostart flag on startup.
             let settings = {
                 let state = handle.state::<db::Db>();

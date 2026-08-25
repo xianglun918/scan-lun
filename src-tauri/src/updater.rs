@@ -139,8 +139,21 @@ pub async fn download_and_install(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-pub fn start_background_loop(_app: AppHandle) {
-    // 占位：Task 5 替换
+/// Spawn a tokio task that checks for updates once on startup,
+/// then every 24h. Failures are logged but not propagated.
+pub fn start_background_loop(app: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        // 第一次立即检查
+        if let Err(e) = check(&app).await {
+            eprintln!("updater: initial check failed: {e}");
+        }
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(24 * 60 * 60)).await;
+            if let Err(e) = check(&app).await {
+                eprintln!("updater: periodic check failed: {e}");
+            }
+        }
+    });
 }
 
 #[cfg(test)]
