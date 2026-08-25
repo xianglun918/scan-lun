@@ -449,41 +449,31 @@ git commit -m "feat(updater): implement async check() with event emission"
 - Consumes: `&AppHandle`
 - Produces: `Result<(), String>`；emit `update-downloaded` / `update-error` 事件
 
+> **重要修正**（Tauri 2 plugin 2.10.1 实际 API）：
+> 1. `Update::download_and_install` 是 `async`，并**必须**传两个 callback（`on_chunk` + `on_download_finish`）。可以传空 closure 当占位。
+> 2. `Updater`（v1 时代）有 `download_and_install` 方法；v2 已**移除**。流程：先 `updater.check().await` → 拿 `Option<Update>` → 如果 `Some(update)` 就 `update.download_and_install(...).await`。
+> 3. Windows 上 `install` 内部会 `std::process::exit(0)` 启动新安装器 —— 这是 Tauri updater 设计，**不**需要额外处理。
+
 - [ ] **Step 1: 替换 `download_and_install` 函数**
 
 ```rust
 /// Download (if a new release exists) and install side-by-side.
 /// On success, emits `update-downloaded` and the caller should restart
 /// via `app.restart()` or ask the user to.
-pub fn download_and_install(app: &AppHandle) -> Result<(), String> {
+///
+/// # Tauri 2 API note
+/// `Update::download_and_install` is async and requires two callbacks:
+/// - `on_chunk(bytes_downloaded, content_length)` fires per download chunk
+/// - `on_download_finish` fires after download (before signature verify)
+/// We pass no-op closures — the frontend gets progress via `update-downloaded`
+/// event fired below. Future enhancement: forward on_chunk bytes to a
+/// `download-progress` event for a real progress bar.
+pub async fn download_and_install(app: &AppHandle) -> Result<(), String> {
     let current = app.package_info().version.to_string();
     let updater = app.updater().map_err(|e| format!("updater init failed: {e}"))?;
-    match updater.check() {
-        Ok(Some(update)) => {
-            update
-                .download_and_install()
-                .map_err(|e| {
-                    let msg = e.to_string();
-                    let _ = tauri::Emitter::emit(
-                        app,
-                        UPDATE_ERROR_EVENT,
-                        serde_json::json!({
-                            "kind": "install_failed",
-                            "message": msg,
-                        }),
-                    );
-                    msg
-                })?;
-            let info = UpdateInfo {
-                available: true,
-                current_version: current,
-                latest_version: Some(update.version),
-                notes: update.body,
-            };
-            let _ = tauri::Emitter::emit(app, UPDATE_DOWNLOADED_EVENT, &info);
-            Ok(())
-        }
-        Ok(None) => Err("no update available".into()),
+    let update = match updater.check().await {
+        Ok(Some(u)) => u,
+        Ok(None) => return Err("no update available".into()),
         Err(e) => {
             let msg = e.to_string();
             let _ = tauri::Emitter::emit(
@@ -494,11 +484,41 @@ pub fn download_and_install(app: &AppHandle) -> Result<(), String> {
                     "message": msg,
                 }),
             );
-            Err(msg)
+            return Err(msg);
         }
+    };
+
+    if let Err(e) = update
+        .download_and_install(
+            |_chunk, _total| { /* progress callback: empty for MVP */ },
+            || { /* on_download_finish: empty for MVP */ },
+        )
+        .await
+    {
+        let msg = e.to_string();
+        let _ = tauri::Emitter::emit(
+            app,
+            UPDATE_ERROR_EVENT,
+            serde_json::json!({
+                "kind": "install_failed",
+                "message": msg,
+            }),
+        );
+        return Err(msg);
     }
+
+    let info = UpdateInfo {
+        available: true,
+        current_version: current,
+        latest_version: Some(update.version),
+        notes: update.body,
+    };
+    let _ = tauri::Emitter::emit(app, UPDATE_DOWNLOADED_EVENT, &info);
+    Ok(())
 }
 ```
+
+> **Windows 行为**：`install` 内部会 `std::process::exit(0)` —— 进程会退出，新安装器启动。`update-downloaded` 事件**可能**在 exit 前没机会 emit（被 OS 杀掉）。这是 Tauri 2 updater 的标准行为，**不**算 bug；用户重启后看到新版本即可。
 
 - [ ] **Step 2: 编译验证**
 
@@ -509,12 +529,21 @@ cargo check --manifest-path src-tauri/Cargo.toml --message-format=short
 
 Expected: 无 error
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: 跑全量测试（应 13 passed）**
+
+```bash
+cd D:\Workspace\scan-lun
+cargo test --manifest-path src-tauri/Cargo.toml --lib
+```
+
+Expected: `13 passed; 0 failed`
+
+- [ ] **Step 4: Commit**
 
 ```bash
 cd D:\Workspace\scan-lun
 git add src-tauri/src/updater.rs
-git commit -m "feat(updater): implement download_and_install() with event emission"
+git commit -m "feat(updater): implement async download_and_install with event emission"
 ```
 
 ---
