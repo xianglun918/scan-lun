@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod scheduler;
+mod updater;
 mod tray;
 
 use std::sync::Mutex;
