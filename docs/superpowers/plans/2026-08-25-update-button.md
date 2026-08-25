@@ -1073,16 +1073,52 @@ git commit -m "feat(updater): add useUpdater composable with Tauri event listene
 
 ---
 
-### Task 9: 前端 App.vue — 调 useUpdater（启动监听）
+### Task 9: 前端 App.vue — 调 useUpdater（启动监听）+ capabilities 授权
 
 **Files:**
 - Modify: `src/App.vue`（script 段加 `useUpdater()` 调用）
+- Modify: `src-tauri/capabilities/default.json`（加 updater + 3 个新 invoke 命令的 permission）
 
 **Interfaces:**
-- Consumes: `useUpdater` composable
-- Produces: 主窗口 mount 时启动 updater 监听（但**不**自动 check —— check 由后端 background loop 触发）
+- Consumes: `useUpdater` composable；Tauri 2 capability system 授权新 invoke 命令
+- Produces: 主窗口 mount 时启动 updater 监听（但**不**自动 check —— check 由后端 background loop 触发）；前端调 `invoke('check_update')` / `install_update` / `restart_app` 不被 capability 拒绝
 
-- [ ] **Step 1: 改 `src/App.vue` 的 `<script setup>` 段**
+- [ ] **Step 1: 改 `src-tauri/capabilities/default.json` 加 permission**
+
+读取现有 `src-tauri/capabilities/default.json`，在 `permissions` 数组里追加（保持 JSON 数组格式）：
+
+```json
+"updater:default",
+"core:event:allow-listen",
+"core:event:allow-unlisten"
+```
+
+> **为什么是这三个**：
+> - `updater:default` 是 `tauri-plugin-updater` 提供的 permission set，授权 `check` / `download_and_install` / 等 Rust 端命令被前端 invoke
+> - `core:event:allow-listen` / `unlisten` 授权 `useUpdater.ts` 用的 `listen<T>("update-available", ...)` 等事件订阅
+> - **注意**：`check_update` / `install_update` / `restart_app` 这三个 command 是我们自己 `commands.rs` 里 `#[tauri::command]` 加的，Tauri 2 默认**不**需要单独加 permission（user-defined commands 默认允许）
+
+完整 `default.json`（保留原有所有内容）应该类似：
+```json
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "default capabilities for the main window",
+  "windows": ["main", "prompt"],
+  "permissions": [
+    "core:default",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "dialog:default",
+    "autostart:default",
+    "updater:default"
+  ]
+}
+```
+
+具体增删根据现状。**不**删除任何现有条目。
+
+- [ ] **Step 2: 改 `src/App.vue` 的 `<script setup>` 段**
 
 找到 import 块（line 1-9 大致是 imports）。在最后一行 import（`import SettingsView from "./views/SettingsView.vue";`）**后面**加：
 
@@ -1097,7 +1133,7 @@ import { useUpdater } from "./composables/useUpdater";
 useUpdater();
 ```
 
-- [ ] **Step 2: 编译 + 类型检查**
+- [ ] **Step 3: 编译 + 类型检查**
 
 ```bash
 cd D:\Workspace\scan-lun
@@ -1106,12 +1142,21 @@ cd D:\Workspace\scan-lun
 
 Expected: 0 error
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: 验证 capabilities 改动没破坏 Tauri config**
 
 ```bash
 cd D:\Workspace\scan-lun
-git add src/App.vue
-git commit -m "feat(updater): initialize useUpdater on app mount"
+node -e "console.log(JSON.parse(require('fs').readFileSync('src-tauri/capabilities/default.json','utf8')).permissions)"
+```
+
+Expected: 输出包含 `updater:default`
+
+- [ ] **Step 5: Commit**
+
+```bash
+cd D:\Workspace\scan-lun
+git add src-tauri/capabilities/default.json src/App.vue
+git commit -m "feat(updater): initialize useUpdater + grant capabilities"
 ```
 
 ---
