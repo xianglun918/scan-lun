@@ -32,7 +32,7 @@ impl UpdateInfo {
 }
 
 /// Public entry. Wraps the result in Tauri event emission.
-pub fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
+pub async fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
     let current = app.package_info().version.to_string();
     let updater = match app.updater() {
         Ok(u) => u,
@@ -40,18 +40,16 @@ pub fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
             return Err(format!("updater init failed: {e}"));
         }
     };
-    check_with(&updater, &current, app)
+    check_with(&updater, &current, app).await
 }
 
 /// Pure function over the updater. Testable without a full Tauri app.
-pub(crate) fn check_with(
+pub(crate) async fn check_with(
     updater: &tauri_plugin_updater::Updater,
     current_version: &str,
     app: &AppHandle,
 ) -> Result<UpdateInfo, String> {
-    // `Updater::check` is async (plugin API); block_on is safe here because
-    // `check` is a sync entry point (never called from within the async runtime).
-    match tauri::async_runtime::block_on(updater.check()) {
+    match updater.check().await {
         Ok(Some(update)) => {
             let info = UpdateInfo {
                 available: true,
