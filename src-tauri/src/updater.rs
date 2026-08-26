@@ -43,7 +43,12 @@ pub async fn check(app: &AppHandle) -> Result<UpdateInfo, String> {
     check_with(&updater, &current, app).await
 }
 
-/// Pure function over the updater. Testable without a full Tauri app.
+/// Async check against the configured endpoint. Takes the resolved `Updater`
+/// (the client from `app.updater()`, NOT the `Update` metadata struct) plus
+/// the current version and the app handle. Emits `update-available` /
+/// `update-error` events on those outcomes. Requires a full Tauri app handle
+/// to emit events, so error paths are covered end-to-end rather than in unit
+/// tests.
 pub(crate) async fn check_with(
     updater: &tauri_plugin_updater::Updater,
     current_version: &str,
@@ -160,9 +165,10 @@ pub fn start_background_loop(app: AppHandle) {
 mod tests {
     use super::*;
 
-    // 注：check_with 接受 &Update 参数，但 tauri_plugin_updater::Update
-    // 没有公开构造器；只能通过 app.updater() 拿。错误路径测试在 Task 5
-    // 端到端覆盖（mock HTTP server）。本 task 不加单元测试。
+    // 注：check_with 接受 &Updater 参数（app.updater() 返回的客户端，不是
+    // Update 元数据结构），但 tauri_plugin_updater::Updater 没有公开构造器；
+    // 错误路径只能通过真实 AppHandle 或 mock HTTP server 测试，超出 MVP
+    // 单元测试范围。本 task 不加单元测试。
 
     #[test]
     fn update_info_serializes_to_camel_case() {

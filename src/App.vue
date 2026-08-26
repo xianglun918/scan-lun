@@ -34,7 +34,10 @@ function navigate(r: "history" | "settings") {
 const isHistory = computed(() => route.value === "history");
 
 // 启动 updater 监听。check 由 Rust background loop 触发，不需要前端主动调。
-useUpdater();
+// 仅主窗口监听（spec §11：prompt 窗不调 useUpdater）。
+if (!isPrompt) {
+  useUpdater();
+}
 </script>
 
 <template>

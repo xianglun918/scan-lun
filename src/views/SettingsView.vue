@@ -172,6 +172,9 @@ async function doClear() {
         <template v-else-if="updater.state.value.status === 'checking'">
           {{ t("settings.update.checking") }}
         </template>
+        <template v-else-if="updater.state.value.status === 'downloading'">
+          {{ t("settings.update.downloading") }}
+        </template>
         <template v-else>
           {{ t("settings.update.current", { version: updater.state.value.currentVersion || "—" }) }}
         </template>
