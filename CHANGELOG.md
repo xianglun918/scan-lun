@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-08-26
+
+应用内更新真正恢复：显式启用 `tauri-action` 的 `uploadUpdaterSignatures`，修复 v1.0.1 / v1.0.2 latest.json 缺失问题。
+
+### 修复
+
+- **`.sig` 签名文件未上传 → latest.json 未生成**：`tauri-action@v1`（v1.0.0，2026-06 发布）的 `inputs.ts` 用 `core.getBooleanInput('uploadUpdaterSignatures')`，空 input 返回 `false`（**与 README 写的 "default: true" 不符** ——README 文档错，源码实际默认 `false`）。结果：CI build 期间 `uploadAssets` 跳过所有 `.sig` 文件，导致 `uploadVersionJSON` 找不到签名配对，**所有 release 缺 `latest.json`**，应用内更新功能完全不可用。修复：在 `release.yml` 显式设 `uploadUpdaterSignatures: 'true'`。
+
 ## [1.0.2] - 2026-08-26
 
 应用内更新恢复：升级 `tauri-action` v0 → v1，修复 latest.json 未生成问题。
@@ -59,7 +67,8 @@
 - Windows（x64 setup exe / msi）
 - Linux（AppImage / deb / rpm）
 
-[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/xianglun918/scan-lun/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/xianglun918/scan-lun/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/xianglun918/scan-lun/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/xianglun918/scan-lun/releases/tag/v1.0.0
