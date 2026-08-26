@@ -44,5 +44,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/xianglun918/scan-lun/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlCODI2ODkzN0E4MUE1ODEKUldTQnBZRjZrMmlDbXlnNEUrTWdyQTVmdGFUSkZuVENiU3V2bUFSbFhkQ1hrSmhNWUJRMi9HWTcK"
+    }
   }
 }
