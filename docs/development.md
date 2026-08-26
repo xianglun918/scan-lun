@@ -40,6 +40,7 @@ src-tauri/src/
 src/
   views/        PromptView（弹窗）/ HistoryView / SettingsView
   services/     类型化 invoke 封装
+```
 
 ## 自动更新机制
 
