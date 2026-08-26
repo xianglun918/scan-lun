@@ -44,7 +44,7 @@ function getAssetContent(asset) {
 }
 
 // 1. List all release assets.
-const assets = JSON.parse(gh(`api repos/${REPO}/releases/tags/${tag}/assets --paginate`));
+const assets = JSON.parse(gh(`release view ${tag} --json assets`)).assets;
 
 // 2. Locate each platform's updater bundle + matching .sig.
 const findBundle = (suffix) =>
