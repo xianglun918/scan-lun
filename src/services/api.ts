@@ -5,6 +5,9 @@ export interface Settings {
   trigger_time: string;
   workdays_only: boolean;
   autostart: boolean;
+  language: string;
+  /** true = template 仍是出厂默认，前端用 i18n 翻译显示；false = 用户已编辑，原样显示 */
+  template_i18n: boolean;
 }
 
 export interface Record {

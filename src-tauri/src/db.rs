@@ -29,6 +29,10 @@ pub struct Settings {
     pub trigger_time: String,
     pub workdays_only: bool,
     pub autostart: bool,
+    pub language: String,
+    /// 标记 template 字段是否仍为"出厂默认"。true = 默认，前端应使用 i18n 翻译；
+    /// false = 用户已编辑过，前端应原样显示 template 内容。
+    pub template_i18n: bool,
 }
 
 impl Default for Settings {
@@ -38,6 +42,8 @@ impl Default for Settings {
             trigger_time: DEFAULT_TRIGGER_TIME.to_string(),
             workdays_only: true,
             autostart: false,
+            language: "zh-CN".to_string(),
+            template_i18n: true,
         }
     }
 }
@@ -149,6 +155,20 @@ pub fn get_settings(conn: &Connection) -> Settings {
             .flatten()
             .map(|v| v == "true")
             .unwrap_or(default.autostart),
+        language: get_setting(conn, "language")
+            .ok()
+            .flatten()
+            .filter(|v| v == "zh-CN" || v == "en-US")
+            .unwrap_or(default.language),
+        template_i18n: get_setting(conn, "template_i18n")
+            .ok()
+            .flatten()
+            .map(|v| v == "true")
+            // 关键：旧用户从没有 template_i18n key 的数据库升级时，如果 template 仍是默认中文，
+            // 仍按"是默认"对待 → 切语言时能翻译；如果 template 已被改过（用户自定义），
+            // 也按"是默认"对待会有问题，但保守策略优先翻译覆盖，用户切回去时如发现被翻译，
+            // 引导用户主动保存一次。
+            .unwrap_or(default.template_i18n),
     }
 }
 
@@ -161,6 +181,8 @@ pub fn save_settings(conn: &Connection, settings: &Settings) -> rusqlite::Result
     set_setting(conn, "trigger_time", &settings.trigger_time)?;
     set_setting(conn, "workdays_only", &settings.workdays_only.to_string())?;
     set_setting(conn, "autostart", &settings.autostart.to_string())?;
+    set_setting(conn, "language", &settings.language)?;
+    set_setting(conn, "template_i18n", &settings.template_i18n.to_string())?;
     Ok(())
 }
 
@@ -199,4 +221,150 @@ pub fn clear_all(conn: &Connection) -> rusqlite::Result<()> {
 
 pub fn today_answered(conn: &Connection) -> rusqlite::Result<bool> {
     Ok(get_record(conn, &today())?.is_some())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    /// 用临时目录开 DB，调用 init() 建表，返回 Connection。
+    /// TempDir 在测试结束时自动清理。
+    fn fresh_conn() -> (TempDir, Connection) {
+        let dir = TempDir::new().expect("tempdir");
+        let conn = init(dir.path()).expect("init db");
+        (dir, conn)
+    }
+
+    // ----- today_answered 行为 -----
+
+    #[test]
+    fn today_answered_is_false_on_empty_db() {
+        let (_dir, conn) = fresh_conn();
+        assert!(!today_answered(&conn).unwrap());
+    }
+
+    #[test]
+    fn today_answered_is_true_after_upsert_today() {
+        let (_dir, conn) = fresh_conn();
+        let today_str = today();
+        upsert_record(&conn, &today_str, &["a".into(), "b".into(), "c".into()]).unwrap();
+        assert!(today_answered(&conn).unwrap());
+    }
+
+    #[test]
+    fn today_answered_uses_today_date_only() {
+        // 昨天填的 record 不应被当成"今天已填"
+        let (_dir, conn) = fresh_conn();
+        upsert_record(
+            &conn,
+            "2020-01-01",
+            &["yesterday1".into(), "y2".into(), "y3".into()],
+        )
+        .unwrap();
+        assert!(
+            !today_answered(&conn).unwrap(),
+            "昨天的 record 不应让 today_answered 返回 true"
+        );
+    }
+
+    // ----- 关键 bug 场景：跨天后用过去日期存 record，应被 today_answered 当作"未填" -----
+    // 这条测试模拟"前端用锁定日期 saveRecord"——存的是昨天（弹窗时锁定），
+    // 即使 Local::now() 现在是今天，today_answered 也不应误报为 true。
+
+    #[test]
+    fn save_with_past_date_does_not_count_as_today() {
+        let (_dir, conn) = fresh_conn();
+        let yesterday = "2020-01-01";
+        upsert_record(&conn, yesterday, &["x".into(), "y".into(), "z".into()]).unwrap();
+
+        // 直接通过 get_record 查询"今天"（这里无法真跨日，但语义可验证）：
+        // records 表里有 yesterday 的 record，today() 返回的日期没 record。
+        assert!(!today_answered(&conn).unwrap());
+    }
+
+    // ----- upsert_record 行为：ON CONFLICT(date) DO UPDATE -----
+
+    #[test]
+    fn upsert_inserts_then_updates_same_date() {
+        let (_dir, conn) = fresh_conn();
+        let d = "2025-03-15";
+        upsert_record(&conn, d, &["a".into(), "b".into(), "c".into()]).unwrap();
+        let r1 = get_record(&conn, d).unwrap().expect("first record");
+        assert_eq!(r1.answers, vec!["a", "b", "c"]);
+
+        upsert_record(&conn, d, &["x".into(), "y".into(), "z".into()]).unwrap();
+        let r2 = get_record(&conn, d).unwrap().expect("updated record");
+        assert_eq!(r2.answers, vec!["x", "y", "z"]);
+        assert_eq!(r2.date, d);
+    }
+
+    #[test]
+    fn upsert_with_different_dates_creates_separate_rows() {
+        let (_dir, conn) = fresh_conn();
+        upsert_record(&conn, "2025-01-01", &["a".into(), "b".into(), "c".into()]).unwrap();
+        upsert_record(&conn, "2025-01-02", &["d".into(), "e".into(), "f".into()]).unwrap();
+
+        let r1 = get_record(&conn, "2025-01-01").unwrap().unwrap();
+        let r2 = get_record(&conn, "2025-01-02").unwrap().unwrap();
+        assert_eq!(r1.answers, vec!["a", "b", "c"]);
+        assert_eq!(r2.answers, vec!["d", "e", "f"]);
+    }
+
+    // ----- 关键 bug 场景：模拟"前端漂移"——用今天日期存 record，模拟"0824 弹窗 0825 保存"被错误存为 0825 -----
+    // 验证：一旦 record.date 真的写成今天，today_answered 就会返回 true（这是期望的，不是 bug）。
+    // 这条测试是"反向验证"——确认"如果前端没锁定，bug 真的会发生"。
+
+    #[test]
+    fn drift_simulation_save_with_today_date_is_answered() {
+        let (_dir, conn) = fresh_conn();
+        // 模拟"前端 today() 现算"：saveRecord(today()) 写入 today 的 record
+        let today_str = today();
+        upsert_record(&conn, &today_str, &["a".into(), "b".into(), "c".into()]).unwrap();
+        // 后端 today_answered 查到今天有 record
+        assert!(today_answered(&conn).unwrap());
+    }
+
+    // ----- save_settings 持久化 -----
+
+    #[test]
+    fn save_and_get_settings_roundtrip() {
+        let (_dir, conn) = fresh_conn();
+        let mut s = Settings::default();
+        s.trigger_time = "07:30".into();
+        s.workdays_only = false;
+        s.autostart = true;
+        s.language = "en-US".into();
+        s.template_i18n = false;
+        save_settings(&conn, &s).unwrap();
+
+        let got = get_settings(&conn);
+        assert_eq!(got.trigger_time, "07:30");
+        assert!(!got.workdays_only);
+        assert!(got.autostart);
+        assert_eq!(got.language, "en-US");
+        assert!(!got.template_i18n);
+    }
+
+    #[test]
+    fn unknown_language_falls_back_to_default() {
+        let (_dir, conn) = fresh_conn();
+        let mut s = Settings::default();
+        s.language = "klingon".into();
+        save_settings(&conn, &s).unwrap();
+
+        let got = get_settings(&conn);
+        assert_eq!(got.language, "zh-CN", "未知 locale 必须回退默认");
+    }
+
+    #[test]
+    fn get_settings_returns_defaults_when_empty() {
+        let (_dir, conn) = fresh_conn();
+        let s = get_settings(&conn);
+        assert_eq!(s.trigger_time, DEFAULT_TRIGGER_TIME);
+        assert!(s.workdays_only);
+        assert!(!s.autostart);
+        assert_eq!(s.language, "zh-CN");
+        assert!(s.template_i18n);
+    }
 }
