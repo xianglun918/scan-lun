@@ -89,9 +89,7 @@ jobs:
           BUNDLE_DIR: src-tauri/target/${{ matrix.platform == 'macos-latest' && 'universal-apple-darwin/release' || 'release' }}/bundle
         run: |
           set -euo pipefail
-          shopt -s globstar nullglob
-          for f in "$BUNDLE_DIR"/**/*.zip "$BUNDLE_DIR"/**/*.zip.sig "$BUNDLE_DIR"/**/*.tar.gz "$BUNDLE_DIR"/**/*.tar.gz.sig; do
-            [ -f "$f" ] || continue
+          find "$BUNDLE_DIR" -type f \( -name "*.zip" -o -name "*.zip.sig" -o -name "*.tar.gz" -o -name "*.tar.gz.sig" \) | while IFS= read -r f; do
             echo "uploading $f"
             gh release upload "${{ github.event.inputs.tagName || github.ref_name }}" "$f" --clobber
           done
