@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tagName:
+        description: "Tag to release (defaults to latest v* tag)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -62,8 +68,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "scan-lun ${{ github.ref_name }}"
+          tagName: ${{ github.event.inputs.tagName || github.ref_name }}
+          releaseName: "scan-lun ${{ github.event.inputs.tagName || github.ref_name }}"
           releaseBody: |
             参见各平台安装包。
           releaseDraft: true
@@ -87,7 +93,7 @@ jobs:
           for f in "$BUNDLE_DIR"/**/*.zip "$BUNDLE_DIR"/**/*.zip.sig "$BUNDLE_DIR"/**/*.tar.gz "$BUNDLE_DIR"/**/*.tar.gz.sig; do
             [ -f "$f" ] || continue
             echo "uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" --clobber
+            gh release upload "${{ github.event.inputs.tagName || github.ref_name }}" "$f" --clobber
           done
 
   publish-updater-json:
@@ -104,4 +110,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node scripts/build-latest-json.mjs "${{ github.ref_name }}" "参见各平台安装包。"
+          node scripts/build-latest-json.mjs "${{ github.event.inputs.tagName || github.ref_name }}" "参见各平台安装包。"
