@@ -31,3 +31,8 @@ tauri-plugin-updater = "2"
 [dev-dependencies]
 tempfile = "3"
 
+# Faster dev iteration: compile dependencies with light optimization so the app
+# runs snappily under `tauri dev`, while the workspace crate still rebuilds cheap.
+[profile.dev]
+opt-level = 1
+
