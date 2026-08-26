@@ -7,16 +7,13 @@
 
 ## [1.0.1] - 2026-08-26
 
-应用内更新检查与一键安装（基于 Tauri 2 官方 `tauri-plugin-updater`）。
+预备版本：上传 1.0.0 → 1.0.1 升级所需的所有二进制包，为后续启用应用内更新铺路。
 
 ### 新增
 
-- **应用内检查更新**：主窗口设置页新增「更新」section；启动时静默检查一次 + 每 24h 后台轮询一次。
-- **一键安装更新**：检测到新版本后用户点「立即更新」即可下载 + 安装 + 重启，全程在应用内完成。
-- **启动时 i18n 同步**：主窗口与 prompt 窗的界面语言在每次启动时按 `settings.language` 对齐（修复之前跨 webview 上下文不同步的问题）。
-- **语言切换即时生效**：在设置里切语言后无需点保存，UI 立即变。
-- **中英文双语**：新增英文界面（`en-US`），语言在设置里可选。
-- **跨天日期锁定**：prompt 窗打开时锁定"今天"，避免弹窗跨到零点后保存错位（修复之前偶发的"今天没填过却提示已填"）。
+- **多平台安装包**（macOS / Windows / Linux）：3 个平台的 7 个二进制包均已构建并上传，资产完整。
+- **签名密钥对**：项目生成并保管了 Tauri updater 用的 minisign 私钥；公钥已写入 `src-tauri/tauri.conf.json` 的 `plugins.updater.pubkey`。
+- **中英文双语**：`vue-i18n` 集成，11 个 `settings.update.*` 键已翻译；语言在设置页可即时切换。
 - **后端测试套件**：14 个后端单元测试（`cargo test --lib`），覆盖 settings 持久化、跨日判定、upsert 行为、locale 回退等。
 - **前端测试套件**：13 个前端单元测试（`vitest run`），覆盖 `today()` 行为与 `useUpdater` composable 的 7 个事件流分支。
 
@@ -26,9 +23,13 @@
 - **设置页 language 字段**：补加 `language` 持久化字段并默认 `zh-CN`；`template_i18n` 字段追踪模板是否仍为出厂默认。
 - **未知 locale 回退**：`settings.language` 读到非法值（如 `klingon`）时回退 `zh-CN`，不会写入数据库。
 
+### 已知问题
+
+- **应用内自动更新暂未启用**：`tauri-action v0` 与 `tauri 2.11.4` 存在兼容问题——CI build 期间会生成 `*.sig` 签名文件，但 tauri-action 的 `uploadVersionJSON` 步骤找不到匹配的 sig，**导致 `latest.json` 未上传到 release**。后果：v1.0.1 客户端**无法通过应用内检查更新功能**找到本 release 的更新元数据。临时解决：用户升级到 1.0.1 需**手动下载**（GitHub release 页下载安装）；应用内更新路径需等后续 release（届时 tauri-action 兼容问题或本项目 tauri 版本需调整）解决。
+
 ### 升级说明
 
-> 1.0.0 用户需手动下载 1.0.1 安装一次——1.0.0 release 没有签名 `latest.json`，应用内自动更新路径从 1.0.1 起可用。
+> 1.0.0 → 1.0.1 需手动下载安装一次（GitHub Releases 页）。
 
 ## [1.0.0] - 2026-08-23
 
