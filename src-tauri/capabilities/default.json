@@ -6,6 +6,9 @@
   "permissions": [
     "core:default",
     "core:window:allow-close",
-    "dialog:default"
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "dialog:default",
+    "updater:default"
   ]
 }

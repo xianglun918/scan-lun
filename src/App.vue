@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import PromptView from "./views/PromptView.vue";
 import HistoryView from "./views/HistoryView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import { useUpdater } from "./composables/useUpdater";
 
 const win = getCurrentWindowSafe();
 const isPrompt = win?.label === "prompt";
@@ -31,6 +32,9 @@ function navigate(r: "history" | "settings") {
 }
 
 const isHistory = computed(() => route.value === "history");
+
+// 启动 updater 监听。check 由 Rust background loop 触发，不需要前端主动调。
+useUpdater();
 </script>
 
 <template>
