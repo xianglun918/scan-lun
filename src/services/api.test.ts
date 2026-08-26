@@ -50,7 +50,6 @@ describe("PromptView todayStr 锁定逻辑", () => {
   it("锁定后即使跨天也用锁定日期", async () => {
     // 模拟 0824 23:59:00
     const start = new Date("2026-08-24T23:59:00").getTime();
-    let now = start;
 
     // 模拟 new Date() / Date.now() —— 通过 vi.useFakeTimers
     const { vi } = await import("vitest");
