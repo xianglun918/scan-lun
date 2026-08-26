@@ -66,4 +66,4 @@ jobs:
             参见各平台安装包。
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} --updater
