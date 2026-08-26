@@ -5,9 +5,17 @@
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-08-26
+
+应用内更新最终修复：绕过 tauri-action 的 `latest.json` 生成 bug，改为 release 构建后自建上传。
+
+### 修复
+
+- **应用内更新仍不可用（v1.0.1 ~ v1.0.3 已知问题）**：根因不是 tauri-action 版本，而是 `tauri-action` 的 `buildProject()` 用 `existsSync()` 在 `.zip` / `.sig` 文件生成前就过滤了 artifacts，导致 `uploadVersionJSON` 永远拿不到签名配对，`latest.json` 永不生成。**v0 和 v1 都有此 bug**（scan-lun v1.0.0 release 也没有 `latest.json`）。修复：在 `release.yml` 的 tauri-action 步骤后新增「Upload updater JSON」步骤，用 `scripts/build-latest-json.mjs` 读取构建产物中的 `.sig` 文件、合并各平台签名与下载 URL、构造 `latest.json` 并上传。v1.0.4 客户端在设置页「更新」section 点「检查更新」即可自动检测并下载安装。
+
 ## [1.0.3] - 2026-08-26
 
-应用内更新真正恢复：显式启用 `tauri-action` 的 `uploadUpdaterSignatures`，修复 v1.0.1 / v1.0.2 latest.json 缺失问题。
+应用内更新恢复：显式启用 `tauri-action` 的 `uploadUpdaterSignatures`，修复 v1.0.1 / v1.0.2 latest.json 缺失问题。
 
 ### 修复
 
@@ -67,7 +75,8 @@
 - Windows（x64 setup exe / msi）
 - Linux（AppImage / deb / rpm）
 
-[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/xianglun918/scan-lun/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/xianglun918/scan-lun/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/xianglun918/scan-lun/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/xianglun918/scan-lun/compare/v1.0.0...v1.0.1

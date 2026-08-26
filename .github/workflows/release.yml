@@ -68,7 +68,35 @@ jobs:
             参见各平台安装包。
           releaseDraft: true
           prerelease: false
-          # tauri-action v1.0.0 默认 uploadUpdaterSignatures=false（README 写的 default:true 错），
-          # 显式设 true 让 .sig 签名文件随 release 上传，latest.json 才能配对。
-          uploadUpdaterSignatures: 'true'
           args: ${{ matrix.args }}
+
+      # WORKAROUND: tauri-action v0/v1 has a bug — buildProject() filters
+      # artifacts with existsSync() before .zip/.sig files are generated, so
+      # latest.json never gets uploaded. We generate + upload it ourselves.
+      # Each platform job merges its own entries into the release's latest.json.
+      - name: Upload updater JSON (latest.json)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUNDLE_DIR: src-tauri/target/${{ matrix.platform == 'macos-latest' && 'universal-apple-darwin/release' || 'release' }}/bundle
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          # map runner platform -> updater platform/arch
+          if [ "$PLATFORM" = "macos-latest" ]; then
+            UPD_PLATFORM=darwin
+            UPD_ARCH=universal
+          elif [ "$PLATFORM" = "ubuntu-22.04" ]; then
+            UPD_PLATFORM=linux
+            UPD_ARCH=x86_64
+          else
+            UPD_PLATFORM=windows
+            UPD_ARCH=x86_64
+          fi
+          echo "== bundle dir =="; find "$BUNDLE_DIR" -type f | sort || true
+          node scripts/build-latest-json.mjs \
+            --platform "$UPD_PLATFORM" \
+            --arch "$UPD_ARCH" \
+            --tag "${{ github.ref_name }}" \
+            --bundle-dir "$BUNDLE_DIR" \
+            --notes "参见各平台安装包。"
