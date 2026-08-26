@@ -5,6 +5,23 @@
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-08-26
+
+首个支持应用内自动更新的正式版本。
+
+### 新增
+
+- **应用内更新（macOS）**：`tauri-plugin-updater` 完整接入——开启 `bundle.createUpdaterArtifacts`、重新生成签名密钥对、`latest.json` 由独立的 `publish-updater-json` job 统一生成。macOS 用户可在设置页「更新」section 点「检查更新」自动检测并下载安装。
+- **签名密钥轮换**：重新生成 minisign 密钥对（旧密钥密码丢失，无法再签名，故轮换）。
+
+### 已知问题
+
+- **Windows / Linux 应用内更新暂不可用**：`tauri-action v1` 在签名后清理了 Windows 的 `.msi.zip` / `.nsis.zip` 与 Linux 的 `.AppImage.tar.gz` updater bundle，导致 `latest.json` 只有 `darwin` 平台项。Windows / Linux 用户需手动下载安装包（GitHub Releases 页）。macOS 的 `.app.tar.gz` updater bundle 完整可用。
+
+### 升级说明
+
+> 因签名密钥轮换（pubkey 变更），v1.0.0 及更早版本无法通过应用内更新升级，需手动下载 v1.0.7 安装一次。
+
 ## [1.0.5] - 2026-08-26
 
 应用内更新真正可用：补上 `tauri.conf.json` 的 `bundle.createUpdaterArtifacts`，让 Tauri 生成 updater bundle（`.zip` / `.tar.gz`）与 `.sig` 签名。
@@ -83,7 +100,8 @@
 - Windows（x64 setup exe / msi）
 - Linux（AppImage / deb / rpm）
 
-[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.7...HEAD
+[1.0.7]: https://github.com/xianglun918/scan-lun/compare/v1.0.0...v1.0.7
 [1.0.5]: https://github.com/xianglun918/scan-lun/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/xianglun918/scan-lun/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/xianglun918/scan-lun/compare/v1.0.2...v1.0.3
