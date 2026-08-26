@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-08-26
+
+应用内更新真正可用：补上 `tauri.conf.json` 的 `bundle.createUpdaterArtifacts`，让 Tauri 生成 updater bundle（`.zip` / `.tar.gz`）与 `.sig` 签名。
+
+### 修复
+
+- **v1.0.1 ~ v1.0.4 应用内更新仍不可用的真正根因**：`tauri.conf.json` **缺少 `bundle.createUpdaterArtifacts: true`**。Tauri 2 的 bundler 只有在开启该配置时才会生成 updater 用的 `.zip` / `.tar.gz` 包和 `.sig` 签名文件。没有它们，`latest.json` 的 `platforms` 无法填充——无论 tauri-action 版本如何（v0 / v1），release 都不会有可用的更新元数据。修复后 `tauri build` 自动生成签名 bundle，release 的 `latest.json` 可由 tauri-action 或自建的 `scripts/build-latest-json.mjs` 生成并上传。v1.0.5 客户端在设置页「更新」section 点「检查更新」即可自动检测并下载安装。
+
 ## [1.0.4] - 2026-08-26
 
 应用内更新最终修复：绕过 tauri-action 的 `latest.json` 生成 bug，改为 release 构建后自建上传。
@@ -75,7 +83,8 @@
 - Windows（x64 setup exe / msi）
 - Linux（AppImage / deb / rpm）
 
-[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/xianglun918/scan-lun/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/xianglun918/scan-lun/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/xianglun918/scan-lun/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/xianglun918/scan-lun/compare/v1.0.1...v1.0.2
