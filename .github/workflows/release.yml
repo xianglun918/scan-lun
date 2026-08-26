@@ -68,4 +68,7 @@ jobs:
             参见各平台安装包。
           releaseDraft: true
           prerelease: false
+          # tauri-action v1.0.0 默认 uploadUpdaterSignatures=false（README 写的 default:true 错），
+          # 显式设 true 让 .sig 签名文件随 release 上传，latest.json 才能配对。
+          uploadUpdaterSignatures: 'true'
           args: ${{ matrix.args }}
