@@ -40,4 +40,40 @@ src-tauri/src/
 src/
   views/        PromptView（弹窗）/ HistoryView / SettingsView
   services/     类型化 invoke 封装
-```
+
+## 自动更新机制
+
+scan-lun 用 Tauri 2 官方 `tauri-plugin-updater`。Release 流程会自动生成签名后的 `latest.json` 供用户应用内检查更新。
+
+### 签名密钥管理
+
+- 私钥**永远不**入 git，存 `~/.tauri/scan-lun.key`
+- 备份到 1Password / 多个安全位置（**丢失 = 所有用户无法升级**）
+- CI 用 `TAURI_SIGNING_PRIVATE_KEY` + `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` env 注入
+- 必须在 GitHub repo settings → Secrets and variables → Actions 加这两个 secret
+
+### 首次配置
+
+1. 本地生成密钥对：
+   ```bash
+   mkdir -p ~/.tauri
+   tauri signer generate -w ~/.tauri/scan-lun.key
+   ```
+2. 复制公钥到 `src-tauri/tauri.conf.json` 的 `plugins.updater.pubkey`
+3. 私钥密码记到 1Password
+
+### Release 流程
+
+1. `git tag v1.1.0 && git push --tags`
+2. GitHub Actions 跑 `.github/workflows/release.yml`
+3. 跑完后会发 release，含 3 个平台安装包 + `latest.json` + 签名
+
+### 手工测更新流程
+
+1. 装 v1.0.0
+2. 启动 → 进设置页 → 等几秒（启动静默检查）
+3. 「更新」section 应显示「当前版本 v1.0.0」+ 按钮「检查更新」
+4. 当 v1.1.0 release 存在后：状态变「发现新版本 v1.1.0」+ 按钮变「立即更新到 v1.1.0」
+5. 点「立即更新到 v1.1.0」→ 按钮变「下载中…」
+6. 下载完成 → 按钮变「重启应用」+ 状态「更新已下载，重启后生效」
+7. 点「重启应用」→ app 关掉再起 → 设置页显示 v1.1.0
