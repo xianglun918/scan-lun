@@ -80,20 +80,6 @@ jobs:
           uploadUpdaterSignatures: 'true'
           args: ${{ matrix.args }}
 
-      # tauri-action 只上传 macOS 的 updater bundle，漏掉 Windows/Linux 的
-      # .zip/.tar.gz。这里手动补传它们（含 .sig），供后续统一生成 latest.json。
-      - name: Upload updater bundles (.zip/.tar.gz + .sig)
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUNDLE_DIR: src-tauri/target/${{ matrix.platform == 'macos-latest' && 'universal-apple-darwin/release' || 'release' }}/bundle
-        run: |
-          set -euo pipefail
-          find "$BUNDLE_DIR" -type f \( -name "*.zip" -o -name "*.zip.sig" -o -name "*.tar.gz" -o -name "*.tar.gz.sig" \) | while IFS= read -r f; do
-            echo "uploading $f"
-            gh release upload "${{ github.event.inputs.tagName || github.ref_name }}" "$f" --clobber
-          done
-
   publish-updater-json:
     needs: build-and-release
     runs-on: ubuntu-latest
