@@ -2,7 +2,9 @@
 .omc/
 
 # opencode runtime state (run-continuation sessions, etc.)
-.omo/
+# release-process.md is tracked documentation — re-include it.
+.omo/*
+!.omo/release-process.md
 
 # Tauri local signing keys (MUST stay local; only pubkey lives in tauri.conf.json)
 .tauri/

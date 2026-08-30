@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **发布流程自动化**：`scripts/release.mjs` 一键锁步发布——脏树检查 → 版本 bump（`tauri.conf.json` / `package.json` / `Cargo.toml` / `Cargo.lock` 锁步）→ CHANGELOG `Unreleased` 转正 → commit + tag + push。发布流程文档见 `.omo/release-process.md`。
+- **CI 自动转正 + 失败清理**：新增 `publish-github-release` job——校验 `latest.json` 覆盖三平台、签名有效、`SHA256SUMS` 存在后才将草稿 Release 转正；任一 job 失败自动删除草稿（保留 tag，可 workflow_dispatch 恢复）。
+- **SHA256SUMS**：release 新增资产校验和文件（取自 GitHub 服务端 digest），手动下载用户可校验完整性。
+
+### 修复
+
+- **版本锁步漂移**：v1.0.1–v1.0.7 期间仅 `tauri.conf.json` 升至 1.0.7，`package.json` / `Cargo.toml` / `Cargo.lock` 停留在 1.0.0，现已对齐至 1.0.7（对安装包与更新器无影响——二者只读 `tauri.conf.json`）。
+
 ## [1.0.7] - 2026-08-26
 
 首个支持应用内自动更新的正式版本。

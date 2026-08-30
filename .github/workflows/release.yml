@@ -75,12 +75,12 @@ jobs:
           releaseDraft: true
           prerelease: false
           # tauri-action 的自动 latest.json 生成有竞态 + 漏传 updater bundle，
-          # 改由独立的 publish-updater-json job 统一生成。
+          # 改由独立的 publish-release-metadata job 统一生成。
           uploadUpdaterJson: 'false'
           uploadUpdaterSignatures: 'true'
           args: ${{ matrix.args }}
 
-  publish-updater-json:
+  publish-release-metadata:
     needs: build-and-release
     runs-on: ubuntu-latest
     steps:
@@ -95,3 +95,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node scripts/build-latest-json.mjs "${{ github.event.inputs.tagName || github.ref_name }}" "参见各平台安装包。"
+      - name: Generate and upload SHA256SUMS
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/generate-sha256sums.mjs "${{ github.event.inputs.tagName || github.ref_name }}"
+
+  # Final gate: verify latest.json covers all platforms with valid signatures
+  # and SHA256SUMS exists, THEN flip the draft to published. A broken updater
+  # can never reach users this way (failures are cleaned up below).
+  publish-github-release:
+    needs: publish-release-metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify assets then publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/verify-release.mjs "${{ github.event.inputs.tagName || github.ref_name }}"
+
+  # pi-style safety net: any failure above → delete the draft release (tag is
+  # kept; recover via workflow_dispatch, do NOT re-run scripts/release.mjs).
+  cleanup-draft-github-release:
+    needs: [build-and-release, publish-release-metadata, publish-github-release]
+    if: ${{ !cancelled() && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete draft release if present
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tagName || github.ref_name }}"
+          if gh release view "$TAG" --json isDraft --jq .isDraft | grep -q true; then
+            gh release delete "$TAG" --yes
+            echo "::warning::draft release $TAG deleted after failed run; tag kept — recover via workflow_dispatch"
+          else
+            echo "no draft release to clean"
+          fi
