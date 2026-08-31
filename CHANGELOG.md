@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-08-31
+
 ### 新增
 
 - **发布流程自动化**：`scripts/release.mjs` 一键锁步发布——脏树检查 → 版本 bump（`tauri.conf.json` / `package.json` / `Cargo.toml` / `Cargo.lock` 锁步）→ CHANGELOG `Unreleased` 转正 → commit + tag + push。发布流程文档见 `.omo/release-process.md`。
