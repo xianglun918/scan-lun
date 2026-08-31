@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>scan-lun · 吾日三省吾身 — 极简每日自省工具</title>
+  <meta name="description" content="scan-lun —— 极简「吾日三省吾身」每日自省工具：每天定时弹出三问表单，后台托盘常驻，本地保存，支持历史回看与 Markdown / CSV 导出。无 AI、无云同步、无社交、无报表。">
+  <meta name="author" content="xianglun918">
+  <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="scan-lun">
+  <meta property="og:title" content="scan-lun · 吾日三省吾身 — 极简每日自省工具">
+  <meta property="og:description" content="每天定时弹出三问表单，后台托盘常驻，本地保存，历史回看与导出。无 AI、无云同步、无社交、无报表。">
+  <meta property="og:url" content="https://xianglun918.github.io/scan-lun/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/xianglun918/scan-lun/main/src-tauri/icons/icon.png">
+
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="canonical" href="https://xianglun918.github.io/scan-lun/">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <!-- ======================= 页头 / 导航 ======================= -->
+  <header class="site-header">
+    <nav class="nav container" aria-label="主导航">
+      <a class="brand" href="#top" aria-label="scan-lun 首页">
+        <img class="brand-logo" src="assets/icon.svg" alt="" width="30" height="30" aria-hidden="true" focusable="false">
+        <span class="brand-name">scan-lun</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features">功能</a></li>
+        <li><a href="#how">使用流程</a></li>
+        <li><a href="#architecture">架构</a></li>
+        <li><a href="#download">下载</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm nav-ghost" href="https://github.com/xianglun918/scan-lun" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-1.93c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12v3.14c0 .3.21.67.8.55A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
+          </svg>
+          GitHub
+        </a>
+        <a class="btn btn-primary btn-sm nav-cta" href="#download">下载</a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="打开菜单">
+          <svg class="icon-open" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+            <line x1="4" y1="7" x2="20" y2="7"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="17" x2="20" y2="17"></line>
+          </svg>
+          <svg class="icon-close" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+            <line x1="5" y1="5" x2="19" y2="19"></line>
+            <line x1="19" y1="5" x2="5" y2="19"></line>
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobile-menu" hidden inert>
+      <a href="#features">功能</a>
+      <a href="#how">使用流程</a>
+      <a href="#architecture">架构</a>
+      <a href="#download">下载</a>
+      <div class="mobile-menu-actions">
+        <a class="btn btn-ghost" href="https://github.com/xianglun918/scan-lun" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn btn-primary" href="#download">下载 scan-lun</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ======================= Hero ======================= -->
+    <section id="top" class="hero">
+      <div class="container hero-inner">
+        <img class="hero-logo" src="assets/icon.svg" alt="" width="92" height="92" aria-hidden="true" focusable="false">
+
+        <p class="hero-eyebrow" data-reveal>极简 · 每日自省</p>
+
+        <h1 class="hero-title" data-reveal>吾日三省吾身</h1>
+        <span class="hero-rule" aria-hidden="true" data-reveal></span>
+
+        <p class="hero-sub" data-reveal>极简每日自省工具 —— 每天定时弹出三问表单，后台托盘常驻，本地保存。</p>
+        <p class="hero-meta" data-reveal>无 AI&nbsp;·&nbsp;无云同步&nbsp;·&nbsp;无社交&nbsp;·&nbsp;无报表</p>
+
+        <div class="hero-actions" data-reveal>
+          <a class="btn btn-primary btn-lg" href="https://github.com/xianglun918/scan-lun/releases/latest" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            下载 scan-lun
+          </a>
+          <a class="btn btn-ghost btn-lg" href="https://github.com/xianglun918/scan-lun" target="_blank" rel="noopener">GitHub</a>
+        </div>
+
+        <p class="tech-stack" data-reveal aria-label="技术栈 Tauri 2, Rust, Vue 3, TypeScript, SQLite">
+          <span aria-hidden="true">技术栈 · </span>Tauri 2&nbsp;·&nbsp;Rust&nbsp;·&nbsp;Vue 3&nbsp;·&nbsp;TypeScript&nbsp;·&nbsp;SQLite
+        </p>
+
+        <!-- 产品示意：三问表单 prompt 窗口 -->
+        <div class="mock" data-reveal aria-hidden="true">
+          <div class="mock-head">
+            <span class="mock-dot" style="background:#ef4444"></span>
+            <span class="mock-dot" style="background:#f59e0b"></span>
+            <span class="mock-dot" style="background:#22c55e"></span>
+            <span class="mock-title">
+              <img src="assets/icon.svg" alt="" width="16" height="16" focusable="false">
+              scan-lun · 今日三省
+            </span>
+            <span class="mock-pill">18:00</span>
+          </div>
+          <div class="mock-body">
+            <div class="mock-q">
+              <span class="mock-num">一</span>
+              <div>
+                <p class="mock-q-title">今日完成了什么？</p>
+                <span class="mock-answer"></span>
+              </div>
+            </div>
+            <div class="mock-q">
+              <span class="mock-num">二</span>
+              <div>
+                <p class="mock-q-title">今日的问题与不足？</p>
+                <span class="mock-answer" style="width:52%"></span>
+              </div>
+            </div>
+            <div class="mock-q">
+              <span class="mock-num">三</span>
+              <div>
+                <p class="mock-q-title">明日计划做什么？</p>
+                <span class="mock-answer" style="width:64%"></span>
+              </div>
+            </div>
+          </div>
+          <div class="mock-foot">
+            <span class="mock-btn mock-btn-solid">保存</span>
+            <span class="mock-btn mock-btn-ghost">稍后</span>
+            <span class="mock-btn mock-btn-text">跳过</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= 功能 ======================= -->
+    <section id="features" class="section" aria-labelledby="features-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow">Features</p>
+          <h2 id="features-title">功能</h2>
+          <p class="section-lead">三个问题，一天回顾。所有功能围绕一次两分钟的自省展开，不多也不少。</p>
+        </header>
+
+        <div class="feature-grid" data-reveal-group>
+          <article class="feature-card" data-reveal>
+            <span class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+              </svg>
+            </span>
+            <h3>每日定时提醒</h3>
+            <p>到点自动弹出三问表单，已答当天不重复打扰。</p>
+          </article>
+
+          <article class="feature-card" data-reveal>
+            <span class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path>
+              </svg>
+            </span>
+            <h3>三问自定义</h3>
+            <p>默认职场三省模板，问题文案可随时修改。</p>
+          </article>
+
+          <article class="feature-card" data-reveal>
+            <span class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                <path d="M3 5v14a9 3 0 0 0 18 0V5"></path>
+                <path d="M3 12a9 3 0 0 0 18 0"></path>
+              </svg>
+            </span>
+            <h3>本地存储</h3>
+            <p>SQLite 明文存储，数据完全留在本机，不上传、不联网。</p>
+          </article>
+
+          <article class="feature-card" data-reveal>
+            <span class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M12 7v5l4 2"></path>
+              </svg>
+            </span>
+            <h3>历史回看</h3>
+            <p>按日期展开查看往期记录，回看自己走过的每一天。</p>
+          </article>
+
+          <article class="feature-card" data-reveal>
+            <span class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </span>
+            <h3>Markdown / CSV 导出</h3>
+            <p>在历史页一键导出全量数据，Markdown 与 CSV 两种格式。</p>
+          </article>
+
+          <article class="feature-card" data-reveal>
+            <span class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="4" width="18" height="12" rx="2"></rect>
+                <path d="M8 21h8"></path>
+                <path d="M12 16v5"></path>
+                <circle cx="17" cy="8" r="1"></circle>
+              </svg>
+            </span>
+            <h3>托盘常驻</h3>
+            <p>关闭即隐藏，仅工作日提醒，可开机自启，安静不打扰。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= 使用流程 ======================= -->
+    <section id="how" class="section section-alt" aria-labelledby="how-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow">How it works</p>
+          <h2 id="how-title">使用流程</h2>
+          <p class="section-lead">从弹出到落库，一次完整的自省只需三步。</p>
+        </header>
+
+        <ol class="steps" data-reveal-group>
+          <li class="step" data-reveal>
+            <span class="step-num" aria-hidden="true">一</span>
+            <h3>到点弹出</h3>
+            <p>每天 18:00（可改）三问表单自动弹出抢焦点；从托盘菜单也可「立即填写」。</p>
+          </li>
+          <li class="step" data-reveal>
+            <span class="step-num" aria-hidden="true">二</span>
+            <h3>填写三问</h3>
+            <p>回答固定三问：
+              <span class="chip">今日完成</span>
+              <span class="chip">今日问题与不足</span>
+              <span class="chip">明日计划</span>
+            </p>
+          </li>
+          <li class="step" data-reveal>
+            <span class="step-num" aria-hidden="true">三</span>
+            <h3>保存 / 稍后 / 跳过</h3>
+            <p><strong>保存</strong>落库当天不再打扰；<strong>稍后</strong>一小时后再弹；<strong>跳过</strong>不落库、不重弹。</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ======================= 架构 ======================= -->
+    <section id="architecture" class="section" aria-labelledby="architecture-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow">Architecture</p>
+          <h2 id="architecture-title">架构</h2>
+          <p class="section-lead">双窗口 + 托盘常驻：prompt 只负责到点打断，main 负责历史回看与设置。</p>
+        </header>
+
+        <figure class="architecture" data-reveal>
+          <figcaption class="architecture-caption">scan-lun 架构总览 —— 图表可滚动、缩放查看，支持深浅色主题。</figcaption>
+          <div class="architecture-frame">
+            <iframe src="assets/architecture.html" loading="lazy" title="scan-lun 架构图：双窗口、托盘与本地数据流"></iframe>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ======================= 下载 ======================= -->
+    <section id="download" class="section section-alt" aria-labelledby="download-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow">Download</p>
+          <h2 id="download-title">下载</h2>
+          <p class="section-lead">选择你的平台，安装后安静地驻留在托盘。</p>
+        </header>
+
+        <div class="platform-grid" data-reveal-group>
+          <a class="platform-card" data-reveal href="https://github.com/xianglun918/scan-lun/releases/latest" target="_blank" rel="noopener">
+            <span class="platform-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true" focusable="false">
+                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09Zm3.378-3.066c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.56-1.702Z"/>
+              </svg>
+            </span>
+            <h3>macOS</h3>
+            <p class="platform-formats">.dmg</p>
+            <span class="platform-cta">前往下载
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </a>
+
+          <a class="platform-card" data-reveal href="https://github.com/xianglun918/scan-lun/releases/latest" target="_blank" rel="noopener">
+            <span class="platform-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true" focusable="false">
+                <path d="M3 5.75 10.25 4.7v6.05H3V5.75Z"/><path d="M13.25 4.4 21 3.6v7.15h-7.75V4.4Z"/><path d="M3 12.75h7.25v6.05L3 17.75v-5Z"/><path d="M13.25 12.75H21v7.15l-7.75-.9v-6.25Z"/>
+              </svg>
+            </span>
+            <h3>Windows</h3>
+            <p class="platform-formats">.exe&nbsp;·&nbsp;.msi</p>
+            <span class="platform-cta">前往下载
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </a>
+
+          <a class="platform-card" data-reveal href="https://github.com/xianglun918/scan-lun/releases/latest" target="_blank" rel="noopener">
+            <span class="platform-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="2" y="4" width="20" height="16" rx="2.5"></rect>
+                <path d="M6 9l3 3-3 3"></path>
+                <path d="M11 15h5"></path>
+              </svg>
+            </span>
+            <h3>Linux</h3>
+            <p class="platform-formats">.AppImage&nbsp;·&nbsp;.deb</p>
+            <span class="platform-cta">前往下载
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </a>
+        </div>
+
+        <div class="download-note" data-reveal>
+          <a class="btn btn-primary btn-lg" href="https://github.com/xianglun918/scan-lun/releases/latest" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            前往 GitHub Releases 下载
+          </a>
+          <p class="download-sub">安装包由 GitHub Actions 自动构建 · 应用无需网络权限，数据全部保存在本机</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================= 页脚 ======================= -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/icon.svg" alt="" width="28" height="28" aria-hidden="true" focusable="false">
+        <span>scan-lun</span>
+        <span class="footer-tag">吾日三省吾身</span>
+      </div>
+      <p class="footer-note">数据仅存本机 · 不上传 · 不联网</p>
+      <nav class="footer-links" aria-label="页脚导航">
+        <a href="https://github.com/xianglun918/scan-lun" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/xianglun918/scan-lun/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        <a href="#top">回到顶部</a>
+      </nav>
+      <p class="footer-copy">© <span id="year">2026</span> xianglun918 · MIT License</p>
+    </div>
+  </footer>
+</body>
+</html>
