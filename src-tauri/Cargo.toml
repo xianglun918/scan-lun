@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "scan-lun"
 version = "1.0.7"
 description = "A minimal daily self-reflection tool. Popup three preset questions on schedule, run in background tray, store records locally."

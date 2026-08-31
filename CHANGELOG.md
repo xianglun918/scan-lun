@@ -13,6 +13,7 @@
 
 ### 修复
 
+- **prompt 窗偶发无法弹出 / 托盘「立即填写」失效**：`prompt` 窗被用户关闭后会被销毁，旧代码仅通过 `get_webview_window` 查找已有窗体并静默忽略 `None`。现在 `tray::show_prompt` 在窗体不存在时按 `tauri.conf.json` 配置重建窗口，确保定时提醒与托盘菜单都能继续弹出。
 - **版本锁步漂移**：v1.0.1–v1.0.7 期间仅 `tauri.conf.json` 升至 1.0.7，`package.json` / `Cargo.toml` / `Cargo.lock` 停留在 1.0.0，现已对齐至 1.0.7（对安装包与更新器无影响——二者只读 `tauri.conf.json`）。
 
 ## [1.0.7] - 2026-08-26

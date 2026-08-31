@@ -44,18 +44,56 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// 尝试显示已有窗口；如果窗口已被销毁（例如 prompt 窗被用户关闭后），
+/// 则按 tauri.conf.json 中的配置重新创建，避免后续弹窗/托盘点击无效。
+fn show_or_create(
+    app: &AppHandle,
+    label: &str,
+    create: impl FnOnce(&AppHandle) -> tauri::Result<tauri::WebviewWindow>,
+) {
+    let win = match app.get_webview_window(label) {
+        Some(win) => {
+            if let Err(e) = win.show() {
+                eprintln!("[scan-lun] failed to show window '{}': {}", label, e);
+                return;
+            }
+            win
+        }
+        None => match create(app) {
+            Ok(win) => win,
+            Err(e) => {
+                eprintln!("[scan-lun] failed to create window '{}': {}", label, e);
+                return;
+            }
+        },
+    };
+
+    let _ = win.unminimize();
+    let _ = win.set_focus();
+}
+
 fn show_main(app: &AppHandle) {
-    if let Some(win) = app.get_webview_window(MAIN_LABEL) {
-        let _ = win.show();
-        let _ = win.unminimize();
-        let _ = win.set_focus();
-    }
+    show_or_create(app, MAIN_LABEL, |app| {
+        tauri::WebviewWindowBuilder::new(app, MAIN_LABEL, tauri::WebviewUrl::App("index.html".into()))
+            .title("scan-lun")
+            .inner_size(800.0, 600.0)
+            .min_inner_size(480.0, 400.0)
+            .build()
+    });
 }
 
 pub fn show_prompt(app: &AppHandle) {
-    if let Some(win) = app.get_webview_window(PROMPT_LABEL) {
-        let _ = win.show();
-        let _ = win.unminimize();
-        let _ = win.set_focus();
-    }
+    show_or_create(app, PROMPT_LABEL, |app| {
+        tauri::WebviewWindowBuilder::new(
+            app,
+            PROMPT_LABEL,
+            tauri::WebviewUrl::App("index.html".into()),
+        )
+        .title("每日三省")
+        .inner_size(480.0, 560.0)
+        .resizable(false)
+        .maximizable(false)
+        .always_on_top(true)
+        .build()
+    });
 }
