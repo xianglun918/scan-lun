@@ -94,4 +94,72 @@
    * ------------------------------------------------------------- */
   var year = document.getElementById("year");
   if (year) year.textContent = String(new Date().getFullYear());
+
+  /* ---------------------------------------------------------------
+   * Downloads — data-driven from the GitHub release metadata
+   * ---------------------------------------------------------------
+   * The app updater's canonical metadata is `latest.json`, published at
+   *   https://github.com/xianglun918/scan-lun/releases/latest/download/latest.json
+   * (see src-tauri/tauri.conf.json `plugins.updater.endpoints`).
+   *
+   * We read the GitHub REST API instead of fetching latest.json directly,
+   * for two reasons:
+   *   1. latest.json only carries UPDATER bundles — for macOS that is the
+   *      `.app.tar.gz`, not the user-facing `.dmg` this page links to.
+   *   2. `releases/latest/download/*` assets are not served with CORS
+   *      headers, so a browser fetch from this GitHub Pages origin is
+   *      blocked. The REST API (api.github.com) sends
+   *      `Access-Control-Allow-Origin: *` and lists every installer asset
+   *      plus SHA256SUMS with its download URL.
+   * ------------------------------------------------------------- */
+  var RELEASE_API = "https://api.github.com/repos/xianglun918/scan-lun/releases/latest";
+
+  // data-asset key -> filename matcher (`.sig` files are excluded by suffix)
+  var ASSET_MATCHERS = {
+    "darwin-dmg": /\.dmg$/,
+    "windows-exe": /\.exe$/,
+    "windows-msi": /\.msi$/,
+    "linux-appimage": /\.AppImage$/,
+    "linux-deb": /\.deb$/
+  };
+
+  function findAsset(assets, re) {
+    for (var i = 0; i < assets.length; i++) {
+      if (re.test(assets[i].name)) return assets[i];
+    }
+    return null;
+  }
+
+  fetch(RELEASE_API)
+    .then(function (res) {
+      if (!res.ok) throw new Error("release API " + res.status);
+      return res.json();
+    })
+    .then(function (release) {
+      var version = String(release.tag_name || "").replace(/^v/, "");
+      var assets = release.assets || [];
+
+      var versionEl = document.getElementById("latest-version");
+      if (versionEl) versionEl.textContent = version ? "v" + version : "—";
+
+      // Per-format + CTA download links.
+      Object.keys(ASSET_MATCHERS).forEach(function (key) {
+        var asset = findAsset(assets, ASSET_MATCHERS[key]);
+        if (!asset) return;
+        var els = document.querySelectorAll(
+          '[data-asset="' + key + '"], [data-asset-cta="' + key + '"]'
+        );
+        els.forEach(function (el) {
+          el.setAttribute("href", asset.browser_download_url);
+        });
+      });
+
+      // SHA256SUMS link.
+      var sums = findAsset(assets, /^SHA256SUMS$/);
+      var sumsLink = document.getElementById("sha256sums-link");
+      if (sums && sumsLink) sumsLink.setAttribute("href", sums.browser_download_url);
+    })
+    .catch(function () {
+      // API unavailable → keep the static fallback links (releases/latest).
+    });
 })();

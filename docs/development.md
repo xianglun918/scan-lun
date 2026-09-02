@@ -26,7 +26,7 @@ pnpm tauri build
 ```
 
 产出当前平台安装包：macOS → `dmg`，Windows → `exe/msi`，Linux → `AppImage/deb`。
-多平台自动构建见 `.github/workflows/release.yml`（打 tag 触发）。发布流程见 [release.md](./release.md)。
+多平台自动构建见 `.github/workflows/release.yml`（打 tag 触发）。发布流程见 [`.omo/release-process.md`](../.omo/release-process.md)。
 
 ## Project Structure
 

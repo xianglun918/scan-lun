@@ -113,7 +113,8 @@
 - Windows（x64 setup exe / msi）
 - Linux（AppImage / deb / rpm）
 
-[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.7...HEAD
+[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.8...HEAD
+[1.0.8]: https://github.com/xianglun918/scan-lun/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/xianglun918/scan-lun/compare/v1.0.0...v1.0.7
 [1.0.5]: https://github.com/xianglun918/scan-lun/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/xianglun918/scan-lun/compare/v1.0.3...v1.0.4

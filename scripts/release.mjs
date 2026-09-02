@@ -14,7 +14,9 @@
  *   2. next version must be > current and not exist as a remote tag
  *   3. CHANGELOG.md must contain a "## [Unreleased]" section
  *   4. bump tauri.conf.json / package.json / Cargo.toml / Cargo.lock
- *   5. CHANGELOG: "## [Unreleased]" -> "## [Unreleased]" + "## [x.y.z] - date"
+ *   5. CHANGELOG: "## [Unreleased]" -> "## [Unreleased]" + "## [x.y.z] - date",
+ *      and maintain the footer compare-links ([Unreleased] -> new tag,
+ *      add a new [x.y.z] link)
  *   6. commit "Release vx.y.z", tag vx.y.z, push branch + tag
  *      (tag push triggers the release workflow)
  *
@@ -109,6 +111,7 @@ if (!changelog.includes('## [Unreleased]')) {
 console.log(`release plan: v${current} → ${tagName}`);
 console.log(`  bump : ${FILES.tauriConf}, ${FILES.packageJson}, ${FILES.cargoToml}, ${FILES.cargoLock}`);
 console.log(`  log  : "## [Unreleased]" → "## [Unreleased]" + "## [${next}] - <today>"`);
+console.log(`  links: [Unreleased] → compare/v${next}...HEAD; add [${next}]: compare/v${current}...v${next}`);
 console.log(`  git  : commit "Release ${tagName}" + tag ${tagName} + push ${git('rev-parse --abbrev-ref HEAD')}`);
 if (dryRun) {
   console.log('dry-run complete, no changes made.');
@@ -137,16 +140,33 @@ const lock = fs.readFileSync(FILES.cargoLock, 'utf8').replace(
 );
 fs.writeFileSync(FILES.cargoLock, lock);
 
-// ---- 6. changelog: promote Unreleased, keep a fresh placeholder ----
+// ---- 6. changelog: promote Unreleased, keep a fresh placeholder + fix footer links ----
 const today = new Date().toISOString().slice(0, 10);
-fs.writeFileSync(
-  FILES.changelog,
-  changelog.replace(
-    '## [Unreleased]',
-    `## [Unreleased]\n\n## [${next}] - ${today}`,
-  ),
-  'utf8',
+
+// Repo base URL, derived from the existing [Unreleased] compare link so it
+// never drifts if the repo is renamed or moved.
+const repoBase = (
+  changelog.match(/\[Unreleased\]:\s*(https?:\/\/\S+)/)?.[1] ??
+  'https://github.com/xianglun918/scan-lun'
+).replace(/\/compare\/[^/]+$/, '');
+
+let nextChangelog = changelog.replace(
+  '## [Unreleased]',
+  `## [Unreleased]\n\n## [${next}] - ${today}`,
 );
+
+// Footer compare-links: [Unreleased] now points at the new tag, and the new
+// version gets its own compare link (current...next) inserted right below it.
+nextChangelog = nextChangelog.replace(
+  /\[Unreleased\]:\s*https?:\/\/\S+/,
+  `[Unreleased]: ${repoBase}/compare/v${next}...HEAD`,
+);
+nextChangelog = nextChangelog.replace(
+  /(\[Unreleased\]:\s*https?:\/\/\S+\n)/,
+  `$1[${next}]: ${repoBase}/compare/v${current}...v${next}\n`,
+);
+
+fs.writeFileSync(FILES.changelog, nextChangelog, 'utf8');
 
 // ---- 7. commit, tag, push ----
 git(
