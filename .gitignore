@@ -18,6 +18,9 @@ latest.json
 # Playwright CLI artifacts
 .playwright-cli/
 
+# Playwright MCP runtime artifacts
+.playwright-mcp/
+
 # Logs
 logs
 *.log
