@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-09-02
+
 ### 修复
 
 - **提醒路径统一**：此前到点定时器与托盘「立即填写」各有独立弹窗逻辑，存在重复/遗漏提醒的可能；现统一走同一提醒事件，任一入口弹出行为一致。
@@ -124,7 +126,8 @@
 - Windows（x64 setup exe / msi）
 - Linux（AppImage / deb / rpm）
 
-[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.8...HEAD
+[Unreleased]: https://github.com/xianglun918/scan-lun/compare/v1.0.9...HEAD
+[1.0.9]: https://github.com/xianglun918/scan-lun/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/xianglun918/scan-lun/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/xianglun918/scan-lun/compare/v1.0.0...v1.0.7
 [1.0.5]: https://github.com/xianglun918/scan-lun/compare/v1.0.4...v1.0.5
