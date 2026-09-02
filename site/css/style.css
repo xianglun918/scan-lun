@@ -747,6 +747,16 @@ ul, ol { list-style: none; }
   margin-bottom: 20px;
 }
 
+.platform-formats a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.platform-formats a:hover,
+.platform-formats a:focus-visible {
+  text-decoration: underline;
+}
+
 .platform-cta {
   display: inline-flex;
   align-items: center;
