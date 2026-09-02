@@ -4,8 +4,6 @@ mod scheduler;
 mod updater;
 mod tray;
 
-use std::sync::Mutex;
-
 use tauri::{Listener, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
@@ -23,7 +21,7 @@ pub fn run() {
 
             let app_data_dir = handle.path().app_data_dir()?;
             let conn = db::init(&app_data_dir)?;
-            handle.manage(db::Db(Mutex::new(conn)));
+            handle.manage(db::Db::new(conn));
 
             let (tx, rx) = tokio::sync::mpsc::channel(8);
             handle.manage(scheduler::SchedulerTx(tx));
@@ -36,8 +34,7 @@ pub fn run() {
             // Apply the persisted autostart flag on startup.
             let settings = {
                 let state = handle.state::<db::Db>();
-                let conn = state.0.lock().expect("db lock poisoned");
-                db::get_settings(&conn)
+                state.with_conn(|conn| db::get_settings(conn))
             };
             if settings.autostart {
                 let _ = handle.autolaunch().enable();
@@ -68,7 +65,6 @@ pub fn run() {
             commands::list_records,
             commands::export_data,
             commands::clear_data,
-            commands::today_status,
             commands::snooze_reminder,
             commands::check_update,
             commands::install_update,

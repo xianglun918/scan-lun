@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use chrono::{Datelike, Local, TimeZone, Weekday};
+use chrono::{DateTime, Datelike, Local, TimeZone, Weekday};
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::sync::mpsc;
 use tokio::time::sleep;
@@ -20,17 +20,16 @@ pub fn start(app: AppHandle, mut rx: mpsc::Receiver<SchedulerMsg>) {
         loop {
             let settings = {
                 let state = app.state::<db::Db>();
-                let conn = state.0.lock().expect("db lock poisoned");
-                db::get_settings(&conn)
+                state.with_conn(|conn| db::get_settings(conn))
             };
 
-            let delay = next_trigger_delay(&settings.trigger_time);
+            let delay = next_trigger_delay(&settings.trigger_time, Local::now());
             let slp = sleep(delay);
             tokio::pin!(slp);
 
             tokio::select! {
                 _ = &mut slp => {
-                    if should_remind(&app) {
+                    if should_remind(&app, Local::now()) {
                         let _ = app.emit(REMIND_EVENT, ());
                     }
                 }
@@ -61,30 +60,33 @@ pub fn schedule_snooze(app: AppHandle, mins: u64) {
     });
 }
 
-fn should_remind(app: &AppHandle) -> bool {
+fn should_remind(app: &AppHandle, now: DateTime<Local>) -> bool {
     let state = app.state::<db::Db>();
-    let conn = state.0.lock().expect("db lock poisoned");
-    let settings = db::get_settings(&conn);
+    let (answered, workdays_only) = state.with_conn(|conn| {
+        let answered = db::today_answered(conn).unwrap_or(false);
+        let workdays_only = db::get_settings(conn).workdays_only;
+        (answered, workdays_only)
+    });
+    should_fire(answered, workdays_only, now)
+}
 
-    if db::today_answered(&conn).unwrap_or(false) {
+/// Pure reminder decision: fire only when today is unanswered and (workdays-only
+/// is off OR today is a weekday). Kept separate from the DB read so the firing
+/// rule is unit-testable with an injected clock.
+fn should_fire(answered_today: bool, workdays_only: bool, now: DateTime<Local>) -> bool {
+    if answered_today {
         return false;
     }
-
-    if settings.workdays_only {
-        let weekday = Local::now().weekday();
-        if matches!(weekday, Weekday::Sat | Weekday::Sun) {
-            return false;
-        }
+    if workdays_only && matches!(now.weekday(), Weekday::Sat | Weekday::Sun) {
+        return false;
     }
-
     true
 }
 
 /// Duration until the next trigger instant. If today's time already passed,
 /// targets tomorrow — the app never back-fires a reminder after the fact.
-fn next_trigger_delay(trigger_time: &str) -> Duration {
+fn next_trigger_delay(trigger_time: &str, now: DateTime<Local>) -> Duration {
     let (h, m) = parse_time(trigger_time);
-    let now = Local::now();
     let today = now.date_naive();
     let tomorrow = today + chrono::Days::new(1);
 
@@ -109,4 +111,69 @@ fn parse_time(s: &str) -> (u32, u32) {
     let h = parts.next().and_then(|v| v.trim().parse().ok()).unwrap_or(18);
     let m = parts.next().and_then(|v| v.trim().parse().ok()).unwrap_or(0);
     (h.min(23), m.min(59))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn dt(y: i32, mo: u32, d: u32, h: u32, mi: u32) -> DateTime<Local> {
+        Local.with_ymd_and_hms(y, mo, d, h, mi, 0).single().unwrap()
+    }
+
+    // 2026-01-02 is a Friday; 2026-01-03 Saturday; 2026-01-04 Sunday.
+
+    #[test]
+    fn should_fire_on_unanswered_weekday() {
+        assert!(should_fire(false, true, dt(2026, 1, 2, 18, 0)));
+    }
+
+    #[test]
+    fn should_not_fire_when_already_answered() {
+        assert!(!should_fire(true, false, dt(2026, 1, 2, 18, 0)));
+    }
+
+    #[test]
+    fn should_not_fire_on_weekend_when_workdays_only() {
+        assert!(!should_fire(false, true, dt(2026, 1, 3, 18, 0)));
+        assert!(!should_fire(false, true, dt(2026, 1, 4, 18, 0)));
+    }
+
+    #[test]
+    fn should_fire_on_weekend_when_workdays_only_off() {
+        assert!(should_fire(false, false, dt(2026, 1, 3, 18, 0)));
+    }
+
+    #[test]
+    fn next_trigger_delay_targets_today_when_trigger_is_future() {
+        let now = dt(2026, 9, 3, 17, 0);
+        assert_eq!(next_trigger_delay("18:00", now), Duration::from_secs(3600));
+    }
+
+    #[test]
+    fn next_trigger_delay_targets_tomorrow_when_trigger_passed() {
+        let now = dt(2026, 9, 3, 18, 30);
+        assert_eq!(
+            next_trigger_delay("18:00", now),
+            Duration::from_secs(84600)
+        );
+    }
+
+    #[test]
+    fn next_trigger_delay_at_exact_instant_targets_tomorrow() {
+        let now = dt(2026, 9, 3, 18, 0);
+        assert_eq!(
+            next_trigger_delay("18:00", now),
+            Duration::from_secs(86400)
+        );
+    }
+
+    #[test]
+    fn next_trigger_delay_defaults_to_1800_on_bad_input() {
+        let now = dt(2026, 9, 3, 17, 0);
+        assert_eq!(
+            next_trigger_delay("not-a-time", now),
+            Duration::from_secs(3600)
+        );
+    }
 }

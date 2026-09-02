@@ -1,7 +1,9 @@
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
+
+use crate::scheduler;
 
 pub const MAIN_LABEL: &str = "main";
 pub const PROMPT_LABEL: &str = "prompt";
@@ -21,7 +23,9 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => show_main(app),
-            "fill" => show_prompt(app),
+            "fill" => {
+                let _ = app.emit(scheduler::REMIND_EVENT, ());
+            }
             "quit" => app.exit(0),
             _ => {}
         })
