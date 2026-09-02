@@ -6,7 +6,24 @@ use chrono::Local;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
-pub struct Db(pub Mutex<Connection>);
+pub struct Db(Mutex<Connection>);
+
+impl Db {
+    /// Wraps a live connection in the process-wide mutex.
+    pub fn new(conn: Connection) -> Self {
+        Db(Mutex::new(conn))
+    }
+
+    /// Runs `f` with the connection locked, centralizing the poison check so
+    /// callers never re-implement `lock().expect(...)`.
+    pub fn with_conn<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&Connection) -> R,
+    {
+        let conn = self.0.lock().expect("db lock poisoned");
+        f(&conn)
+    }
+}
 
 pub const DEFAULT_TEMPLATE: [&str; 3] = [
     "今日工作完成了什么？",

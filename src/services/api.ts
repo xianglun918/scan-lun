@@ -1,5 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
+import {
+  CMD_CLEAR_DATA,
+  CMD_EXPORT_DATA,
+  CMD_GET_RECORD,
+  CMD_GET_SETTINGS,
+  CMD_LIST_RECORDS,
+  CMD_SAVE_RECORD,
+  CMD_SAVE_SETTINGS,
+  CMD_SNOOZE_REMINDER,
+} from "../constants";
 
+/** 镜像 Rust `src-tauri/src/db.rs` 的 `Settings`（serde，snake_case）。字段名须与 Rust 侧一致。 */
 export interface Settings {
   template: string[];
   trigger_time: string;
@@ -10,6 +21,7 @@ export interface Settings {
   template_i18n: boolean;
 }
 
+/** 镜像 Rust `src-tauri/src/db.rs` 的 `Record`（serde，snake_case）。字段名须与 Rust 侧一致。 */
 export interface Record {
   date: string;
   answers: string[];
@@ -19,28 +31,26 @@ export interface Record {
 
 export type ExportFormat = "markdown" | "csv";
 
-export const getSettings = (): Promise<Settings> => invoke("get_settings");
+export const getSettings = (): Promise<Settings> => invoke(CMD_GET_SETTINGS);
 
 export const saveSettings = (settings: Settings): Promise<void> =>
-  invoke("save_settings", { settings });
+  invoke(CMD_SAVE_SETTINGS, { settings });
 
 export const getRecord = (date: string): Promise<Record | null> =>
-  invoke("get_record", { date });
+  invoke(CMD_GET_RECORD, { date });
 
 export const saveRecord = (date: string, answers: string[]): Promise<void> =>
-  invoke("save_record", { date, answers });
+  invoke(CMD_SAVE_RECORD, { date, answers });
 
-export const listRecords = (): Promise<Record[]> => invoke("list_records");
+export const listRecords = (): Promise<Record[]> => invoke(CMD_LIST_RECORDS);
 
 export const exportData = (path: string, format: ExportFormat): Promise<void> =>
-  invoke("export_data", { path, format });
+  invoke(CMD_EXPORT_DATA, { path, format });
 
-export const clearData = (): Promise<void> => invoke("clear_data");
-
-export const todayStatus = (): Promise<boolean> => invoke("today_status");
+export const clearData = (): Promise<void> => invoke(CMD_CLEAR_DATA);
 
 export const snoozeReminder = (mins: number): Promise<void> =>
-  invoke("snooze_reminder", { mins });
+  invoke(CMD_SNOOZE_REMINDER, { mins });
 
 export function today(): string {
   const d = new Date();

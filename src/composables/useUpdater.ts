@@ -1,6 +1,14 @@
 import { ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import {
+  CMD_CHECK_UPDATE,
+  CMD_INSTALL_UPDATE,
+  CMD_RESTART_APP,
+  EVT_UPDATE_AVAILABLE,
+  EVT_UPDATE_DOWNLOADED,
+  EVT_UPDATE_ERROR,
+} from "../constants";
 
 export type UpdateStatus =
   | "idle" | "checking" | "available" | "downloading"
@@ -65,17 +73,17 @@ function createUpdater(): UpdaterApi {
 
   async function attachListeners(): Promise<void> {
     unlistens.push(
-      await listen<UpdateAvailablePayload>("update-available", (e) => {
+      await listen<UpdateAvailablePayload>(EVT_UPDATE_AVAILABLE, (e) => {
         applyInfo(e.payload, "available");
       }),
     );
     unlistens.push(
-      await listen<UpdateDownloadedPayload>("update-downloaded", (e) => {
+      await listen<UpdateDownloadedPayload>(EVT_UPDATE_DOWNLOADED, (e) => {
         applyInfo(e.payload, "downloaded");
       }),
     );
     unlistens.push(
-      await listen<UpdateErrorPayload>("update-error", (e) => {
+      await listen<UpdateErrorPayload>(EVT_UPDATE_ERROR, (e) => {
         setError(e.payload.message);
       }),
     );
@@ -84,7 +92,7 @@ function createUpdater(): UpdaterApi {
   async function check(): Promise<void> {
     state.value = { ...state.value, status: "checking", errorMessage: null };
     try {
-      const info = await invoke<UpdateAvailablePayload>("check_update");
+      const info = await invoke<UpdateAvailablePayload>(CMD_CHECK_UPDATE);
       applyInfo(info, info.available ? "available" : "up-to-date");
     } catch (e) {
       setError(String(e));
@@ -94,7 +102,7 @@ function createUpdater(): UpdaterApi {
   async function install(): Promise<void> {
     state.value = { ...state.value, status: "downloading" };
     try {
-      await invoke("install_update");
+      await invoke(CMD_INSTALL_UPDATE);
       // 状态会被 update-downloaded 事件覆盖
     } catch (e) {
       setError(String(e));
@@ -103,7 +111,7 @@ function createUpdater(): UpdaterApi {
 
   async function restart(): Promise<void> {
     try {
-      await invoke("restart_app");
+      await invoke(CMD_RESTART_APP);
     } catch (e) {
       setError(String(e));
     }

@@ -2,21 +2,15 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { save } from "@tauri-apps/plugin-dialog";
-import {
-  exportData,
-  getSettings,
-  listRecords,
-  type Record,
-  type Settings,
-} from "../services/api";
+import { exportData, listRecords, type Record } from "../services/api";
 import { useDisplayTemplate } from "../i18n";
+import { useSettings } from "../composables/useSettings";
 
 const { t, locale } = useI18n();
 
 const records = ref<Record[]>([]);
-const settings = ref<Settings | null>(null);
+const { settings, error, load } = useSettings();
 const expanded = ref<string | null>(null);
-const error = ref("");
 const exporting = ref(false);
 
 /* 跟随语言的 template 翻译（如果 template_i18n === true） */
@@ -26,11 +20,16 @@ const displayTemplate = useDisplayTemplate(
 );
 
 onMounted(async () => {
-  [settings.value, records.value] = await Promise.all([
-    getSettings(),
-    listRecords(),
-  ]);
+  await Promise.all([load(), loadRecords()]);
 });
+
+async function loadRecords() {
+  try {
+    records.value = await listRecords();
+  } catch (e) {
+    error.value = String(e);
+  }
+}
 
 function toggle(date: string) {
   expanded.value = expanded.value === date ? null : date;

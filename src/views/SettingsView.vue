@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-  clearData,
-  getSettings,
-  saveSettings,
-  type Settings,
-} from "../services/api";
+import { clearData, saveSettings } from "../services/api";
 import { setLocale, SUPPORTED_LOCALES, LOCALE_LABELS, useDisplayTemplate, type SupportedLocale } from "../i18n";
 import { useUpdater } from "../composables/useUpdater";
+import { useSettings } from "../composables/useSettings";
 
 const emit = defineEmits<{ (e: "settings-saved"): void }>();
 
@@ -20,9 +16,8 @@ const updater = useUpdater();
    status === 'downloading' 比较触发 TS2367（行为与内联表达式一致） */
 const downloading = computed(() => updater.state.value.status === "downloading");
 
-const settings = ref<Settings | null>(null);
+const { settings, error, load } = useSettings();
 const saved = ref(false);
-const error = ref("");
 const confirmingClear = ref(false);
 
 const displayTemplate = useDisplayTemplate(
@@ -31,10 +26,9 @@ const displayTemplate = useDisplayTemplate(
 );
 
 onMounted(async () => {
-  const s = await getSettings();
-  settings.value = s;
-  // 启动时也同步一次 i18n locale
-  if (s.language === "zh-CN" || s.language === "en-US") {
+  await load();
+  const s = settings.value;
+  if (s && (s.language === "zh-CN" || s.language === "en-US")) {
     setLocale(s.language as SupportedLocale);
   }
 });
