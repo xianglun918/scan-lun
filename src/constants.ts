@@ -15,7 +15,6 @@ export const CMD_SAVE_RECORD = "save_record" as const;
 export const CMD_LIST_RECORDS = "list_records" as const;
 export const CMD_EXPORT_DATA = "export_data" as const;
 export const CMD_CLEAR_DATA = "clear_data" as const;
-export const CMD_TODAY_STATUS = "today_status" as const;
 export const CMD_SNOOZE_REMINDER = "snooze_reminder" as const;
 export const CMD_CHECK_UPDATE = "check_update" as const;
 export const CMD_INSTALL_UPDATE = "install_update" as const;

@@ -8,7 +8,6 @@ import {
   CMD_SAVE_RECORD,
   CMD_SAVE_SETTINGS,
   CMD_SNOOZE_REMINDER,
-  CMD_TODAY_STATUS,
 } from "../constants";
 
 /** 镜像 Rust `src-tauri/src/db.rs` 的 `Settings`（serde，snake_case）。字段名须与 Rust 侧一致。 */
@@ -49,8 +48,6 @@ export const exportData = (path: string, format: ExportFormat): Promise<void> =>
   invoke(CMD_EXPORT_DATA, { path, format });
 
 export const clearData = (): Promise<void> => invoke(CMD_CLEAR_DATA);
-
-export const todayStatus = (): Promise<boolean> => invoke(CMD_TODAY_STATUS);
 
 export const snoozeReminder = (mins: number): Promise<void> =>
   invoke(CMD_SNOOZE_REMINDER, { mins });
